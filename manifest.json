@@ -4,7 +4,7 @@
 	"version": "0.1.0",
 	"minAppVersion": "1.4.0",
 	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced code blocks.",
-	"author": "wataame1go",
-	"authorUrl": "",
+	"author": "Hiroshi Watanabe",
+	"authorUrl": "https://github.com/hiroshi-watanabe",
 	"isDesktopOnly": false
 }

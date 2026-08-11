@@ -1,6 +1,8 @@
 # Fretboard Renderer
 
-Obsidianのノート内で、軽量なYAML記法からギターの指板図（フレットボード図）をSVGとして描画するプラグインです。コード進行の分析からペンタトニック／モード・スケールのポジション確認まで、最小限のタイピングで見栄えの良い図を作れることを目指しています。
+*[日本語 README](README.ja.md)*
+
+Render guitar fretboard diagrams as SVG in your Obsidian notes, from a lightweight YAML syntax inside fenced code blocks. From analyzing chord progressions to checking pentatonic/mode positions, the goal is clean-looking diagrams with minimal typing.
 
 ````markdown
 ```fretboard
@@ -14,73 +16,77 @@ notes:
 ```
 ````
 
-## インストール（開発版）
+## Installation
 
-1. このリポジトリを Vault の `.obsidian/plugins/fretboard-renderer` にクローン、または配置する。
+### From Community Plugins
+Search for "Fretboard Renderer" in Obsidian's Community Plugins browser and install it.
+
+### Manual / development build
+1. Clone or place this repository at `<vault>/.obsidian/plugins/fretboard-renderer`.
 2. `npm install`
-3. `npm run build`（一度だけビルド）、または `npm run dev`（ソース変更を監視して自動リビルド）
-4. Obsidianの設定 → コミュニティプラグイン で "Fretboard Renderer" を有効化する。
+3. `npm run build` (one-off build), or `npm run dev` (watch mode, rebuilds on save)
+4. Enable "Fretboard Renderer" in Obsidian's Settings → Community plugins.
 
-## 設定の3階層（System / Global / Local）
+## Three configuration layers (System / Global / Local)
 
-設定は3段階のレイヤーで構成され、**後段ほど優先度が高くなります**。
+Configuration is layered in three tiers, **each one overriding the last**:
 
 ```
-Local（```fretboardブロックごとのYAML）
-  ↑ 上書き
-Global（Vaultルートの fretboard-renderer.yaml）
-  ↑ 上書き
-System（Obsidianのプラグイン設定画面）
+Local (YAML inside a single ```fretboard block)
+  ↑ overrides
+Global (fretboard-renderer.yaml at the vault root)
+  ↑ overrides
+System (the plugin's Settings tab)
 ```
 
-| レイヤー | 定義場所 | スコープ |
+| Layer | Defined in | Scope |
 | :--- | :--- | :--- |
-| **System** | Obsidianの設定画面（このプラグインの設定タブ） | Vault内の全```fretboardブロックの最終フォールバック |
-| **Global** | Vaultルート直下の `fretboard-renderer.yaml` | そのVault内の全```fretboardブロック |
-| **Local** | 各```fretboardコードブロック内のYAML | そのブロック1つだけ |
+| **System** | Obsidian's Settings tab for this plugin | Fallback for every ```fretboard block in the vault |
+| **Global** | `fretboard-renderer.yaml` at the vault root | Every ```fretboard block in that vault |
+| **Local** | YAML inside each ```fretboard code block | That one block only |
 
-### System（プラグイン設定画面）
+### System (Settings tab)
 
-Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の全ての図に影響するデフォルト値です。設定画面は「Layout & Dimensions」「Display & Style」「Note Appearance」「Tuning & Fallback」の4セクションに分かれています。Note size / Label font sizeは「Note Appearance」セクションにあります。
+Change these under Settings → Fretboard Renderer. They're the defaults for every diagram in the vault. The settings tab is organized into four sections: "Layout & dimensions", "Display & style", "Note appearance", and "Tuning & fallback".
 
-| 項目 | 値 | デフォルト |
+| Setting | Values | Default |
 | :--- | :--- | :--- |
 | Orientation | `horizontal` / `vertical` | `horizontal` |
-| Strings | 弦の本数 | `6` |
-| Fret count | 描画するフレット幅 | `4` |
-| String spacing | 弦間隔（px） | `30` |
-| Fret spacing | フレット間隔（px） | `50` |
-| Label mode | `interval`（度数） / `note`（音名） / `none` | `interval` |
-| Accidental | `sharp`（#） / `flat`（b） | `sharp` |
+| Strings | Number of strings | `6` |
+| Fret count | Fret width to draw | `4` |
+| String spacing | Spacing between strings (px) | `30` |
+| Fret spacing | Spacing between frets (px) | `50` |
+| Label mode | `interval` (degree) / `note` (note name) / `none` | `interval` |
+| Accidental | `sharp` (#) / `flat` (b) | `sharp` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
-| Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `filled` |
-| Nut style | `thick`（太線） / `double`（二重線） | `thick` |
-| Fret numbering | `all` / `dotted`（音がある列のみ） / `inlay`（指板インレイ位置のみ: 3,5,7,9,12,15,17,19,21,24,...） / `none` | `dotted` |
-| Default tuning | 低音弦から高音弦の順、カンマ区切り | `E,A,D,G,B,E` |
-| Omitted string behavior | `open`（f:0扱い） / `muted`（f:x扱い） / `none`（描画しない） | `open` |
-| Note size (px) | 音のドット（形）の基準半径。個々のノートの`sizeAdjust`（-5〜5）がここに加算される | `10` |
-| Label font size (px) | 音のラベル文字の基準フォントサイズ。個々のノートの`labelSizeAdjust`（-5〜5）がここに加算される | `10` |
+| Fill style | `filled` / `outlined` | `filled` |
+| Nut style | `thick` / `double` | `thick` |
+| Fret numbering | `all` / `dotted` (only fretted columns) / `inlay` (standard inlay positions: 3,5,7,9,12,15,17,19,21,24,...) / `none` | `dotted` |
+| Default tuning | Comma separated, lowest string first | `E,A,D,G,B,E` |
+| Omitted string behavior | `open` (treat as f:0) / `muted` (treat as f:x) / `none` (draw nothing) | `open` |
+| Note size (px) | Base radius of each note dot; a note's `sizeAdjust` (-5..5) is added to this | `10` |
+| Label font size (px) | Base font size for note labels; a note's `labelSizeAdjust` (-5..5) is added to this | `10` |
 
-`Label mode: note`は**絶対モード**（`startFret`を指定した場合、または明示的な開放弦`f: 0`を含む場合）でのみ音名を自動表示します。相対/移動モード（`startFret`省略かつ開放弦なし）では、実際の音はポジションに依存して確定しないため、`note`モードでも自動ラベルは表示されません（度数はどこで弾いても同じ関係になるため、`interval`モードはこの制約を受けません）。
+`Label mode: note` only shows note names in **absolute mode** (`startFret` given, or an explicit open string `f: 0` present). In relative/movable mode (`startFret` omitted and no open string), the actual notes depend on where the shape is played, so `note` mode shows no automatic label either (interval labels are unaffected, since the same relationship holds wherever the shape is played).
 
-### Global（Vault共通のYAML設定ファイル）
+### Global (vault-wide YAML config file)
 
-Vaultの**ルートディレクトリ**（`.obsidian/`の中ではない）に **`fretboard-renderer.yaml`** というファイルを作ると、Systemの値をVault単位で上書きできます。指定できるキーはSystemの表と同じです。
+Create a file named **`fretboard-renderer.yaml`** at the vault's **root** (not inside `.obsidian/`) to override System values for the whole vault. It accepts the same keys as the System table above.
 
 ```yaml
-# Vaultルート/fretboard-renderer.yaml
+# <vault root>/fretboard-renderer.yaml
 orientation: vertical
 fretCount: 5
 labelMode: note
 ```
 
-- ファイルが無い、またはキーが省略されている項目はSystemの値のまま。
-- 保存すると次の描画から自動的に反映されます（プラグインの再読み込み不要）。
-- 構文エラーがある場合は、Obsidianの通知（Notice）で一度だけエラーを表示し、System設定にフォールバックします（Vault内の図が全部壊れることはありません）。
+- Any key that's absent, or if the file doesn't exist, falls back to the System value.
+- Saving the file takes effect on the next render — no need to reload the plugin.
+- A syntax error shows a one-time Obsidian notice and falls back to System settings (it won't break every diagram in the vault).
 
-### Local（```fretboardブロックごとのYAML）
+### Local (YAML inside each ```fretboard block)
 
-各ノートの```fretboardコードブロックに直接書きます。System・Globalを最終的に上書きする、最も優先度の高い設定です。`notes` だけが必須で、他は全て任意です。
+Write this directly inside each note's ```fretboard code block. It has the highest priority, overriding both System and Global. Only `notes` is required.
 
 ```fretboard
 title: Am Pentatonic (Box 1)
@@ -98,9 +104,9 @@ notes:
   - {s: 5, f: 7, finger: 3, ghost: true}
 ```
 
-#### `notes`（必須）
+#### `notes` (required)
 
-音の配置データの配列。オブジェクト形式と配列の省略記法の両方を使えます。
+An array of note placements. Both object form and a positional shorthand array are accepted.
 
 ```yaml
 notes:
@@ -111,58 +117,58 @@ notes:
   - {s: 4, f: 7, color: red, fillStyle: outlined, sizeAdjust: -3, labelSizeAdjust: 2}
 ```
 
-| キー | 必須 | 説明 |
+| Key | Required | Description |
 | :--- | :--- | :--- |
-| `s` | ✅ | 弦番号（1〜N、1が最も高音の弦） |
-| `f` | ✅ | フレット番号。`0`=開放弦、`1`以上=押弦、`x`=ミュート。**`0`と`x`はグリッドの列ではなく、常にグリッド外のヘッダ領域に描画される特殊記号**（フレット番号ラベルとしてカウントされない） |
-| `label` | – | `root` を指定すると度数を自動計算。任意の文字列（`"maj7"`, `"9"` など）を書くと自動計算を無視してそのまま表示 |
+| `s` | Yes | String number (1..N, 1 is the highest-pitched string) |
+| `f` | Yes | Fret number. `0` = open, `1`+ = fretted, `x` = muted. **`0` and `x` are not grid columns** — they're always drawn in a special header lane outside the grid, and are never counted as fret-number labels |
+| `label` | – | `root` auto-computes the interval degree. Any other string (e.g. `"maj7"`, `"9"`) is shown verbatim, bypassing auto-calculation |
 | `shape` | – | `circle` / `square` / `triangle` |
-| `finger` | – | 運指番号。ドットの外側に小さく表示 |
-| `ghost` | – | `true`で点線・半透明表示 |
-| `class` | – | 任意のCSSクラス名（スニペットでのハイライト用） |
-| `color` | – | この音1つだけの色をCSS色文字列（`red`, `#ff0000`, `var(--color-red)`等）で指定。System/GlobalのFill StyleやRoot強調色より優先される |
-| `fillStyle` | – | `filled` / `outlined`。この音1つだけSystem/Globalの`Fill style`を上書き |
-| `sizeAdjust` | – | 整数 -5〜5。この音1つだけの形の大きさを`Note size`からpx単位で微調整 |
-| `labelSizeAdjust` | – | 整数 -5〜5。この音1つだけのラベル文字サイズを`Label font size`からpx単位で微調整 |
+| `finger` | – | Finger number, printed small just outside the dot |
+| `ghost` | – | `true` draws a dashed/translucent outline |
+| `class` | – | Arbitrary CSS class name, for highlighting via a CSS snippet |
+| `color` | – | CSS color for just this note (`red`, `#ff0000`, `var(--color-red)`, ...). Overrides System/Global fill style and the root-highlight color |
+| `fillStyle` | – | `filled` / `outlined`. Overrides System/Global `Fill style` for just this note |
+| `sizeAdjust` | – | Integer -5..5. Nudges just this note's dot size (px) from `Note size` |
+| `labelSizeAdjust` | – | Integer -5..5. Nudges just this note's label font size (px) from `Label font size` |
 
-`color` / `fillStyle` / `sizeAdjust` / `labelSizeAdjust` はオブジェクト形式（`{s: ..., f: ...}`）でのみ指定できます。配列の省略記法（`[s, f, label, shape, finger]`）には含まれません。
+`color`, `fillStyle`, `sizeAdjust`, and `labelSizeAdjust` are only available in object form (`{s: ..., f: ...}`) — not in the `[s, f, label, shape, finger]` shorthand array.
 
-Rootとして強調される音（`label: root`と同じ音、オクターブ違い含む）は、デフォルトではSystemのアクセントカラー（Obsidianテーマの`--interactive-accent`、既定では紫系）で強調表示されます。これは意図した既定動作です。特定の音を赤にしたい等、個別に色を変えたい場合は上記の`color`で上書きしてください。
+Notes highlighted as the root (same pitch class as the `label: root` note, including octaves) use the System accent color by default (Obsidian's `--interactive-accent` theme variable, typically purple/blue) — this is intentional default behavior. Use `color` above to override the color of any specific note, e.g. to make it red.
 
-#### そのほかのLocalオプション（すべて任意）
+#### Other Local options (all optional)
 
-| キー | 型 | 説明 |
+| Key | Type | Description |
 | :--- | :--- | :--- |
-| `title` | String | 上部に表示するタイトル。省略時は自動生成（下記参照） |
-| `startFret` | Number | 描画領域の左端フレット番号。省略すると相対モードになる（下記参照） |
-| `frets` | Number | 描画するフレット幅（Systemの`Fret count`をこの図だけ上書き） |
-| `orientation` | `horizontal` / `vertical` | この図だけ向きを上書き |
-| `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う |
-| `fretSpacingAdjust` | 整数 -5〜5 | フレット間隔（px）への微調整。`size`より先に加算される |
-| `stringSpacingAdjust` | 整数 -5〜5 | 弦間隔（px）への微調整。`size`より先に加算される |
-| `visible` | String | 描画する弦の範囲。例: `"1-4"` |
-| `barre` | Array | `{fret, start, end}` でセーハ（バレー）を描画 |
-| `boxes` | Array | `{frets: "5-8", strings: "1-6", style: "dashed"}` でスケールポジション等を枠で囲む |
-| `paths` | Array | `[[6,5],[6,8],[5,5]]` のようにドット同士を線で結ぶ |
+| `title` | String | Title printed above the diagram. Auto-generated if omitted (see below) |
+| `startFret` | Number | Leftmost fret number of the grid. Omitting it switches to relative mode (see below) |
+| `frets` | Number | Fret width to draw (overrides System `Fret count` for this diagram only) |
+| `orientation` | `horizontal` / `vertical` | Overrides orientation for this diagram only |
+| `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
+| `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |
+| `stringSpacingAdjust` | Integer -5..5 | Pixel nudge to string spacing, applied before `size` |
+| `visible` | String | Range of strings to draw, e.g. `"1-4"` |
+| `barre` | Array | `{fret, start, end}` — draws a barre marker |
+| `boxes` | Array | `{frets: "5-8", strings: "1-6", style: "dashed"}` — outlines a scale position or similar |
+| `paths` | Array | `[[6,5],[6,8],[5,5]]` — connects dots with a line |
 
-`size` / `fretSpacingAdjust` / `stringSpacingAdjust`（図全体）と、各`notes`エントリの`sizeAdjust` / `labelSizeAdjust`（音1つだけ）は、プラグインの `styles.css` を直接編集する代わりに、ノート側から見た目を微調整するための機能です。ユーザーが本体のCSSファイルを触ることは想定していません。細かい色調整も同様に、CSSではなく各`notes`エントリの`color`で行います。
+`size` / `fretSpacingAdjust` / `stringSpacingAdjust` (whole diagram) and each note's `sizeAdjust` / `labelSizeAdjust` exist so you can fine-tune appearance from a note's YAML instead of editing the plugin's own `styles.css` — that file isn't meant to be edited by users. Fine-grained color is likewise handled per-note via `color`, not CSS.
 
-## 絶対モード / 相対モード
+## Absolute mode vs. relative mode
 
-- **絶対モード:** `startFret` を指定した場合。または、`startFret` を省略していても`notes`に明示的な開放弦（`f: 0`）が含まれる場合（開放弦を含む形は物理的に移動できないため）。実際のコード名（例: `Cmaj7`）を自動生成し、左端が本当に0フレットの時だけナットを太線/二重線で描画します。
-- **相対モード:** `startFret` を省略し、かつ開放弦を一切含まない場合。ムーバブルな（移動可能な）パターンとみなし、`notes`内の最小フレット（0とxを除く）を自動的に左端にし、フレット番号は表示せず、相対的なコード名（例: `□maj7`）を生成します。
+- **Absolute mode:** `startFret` is given, or — even without it — `notes` contains an explicit open string (`f: 0`), since a shape with an open string can't physically be moved up the neck. Generates a real chord name (e.g. `Cmaj7`), and only draws the nut (thick/double line) when the left edge is truly fret 0.
+- **Relative mode:** `startFret` is omitted and no open string is present. Treated as a movable pattern: the leftmost fret is set automatically to the lowest fretted note (excluding 0 and x), no fret numbers are printed, and a relative chord name is generated (e.g. `□maj7`).
 
-## 度数の自動計算とルート強調
+## Interval auto-calculation and root highlighting
 
-いずれかの音に `label: root` を指定すると、チューニングを基準に各音の度数（`1, b2, 2, m3, 3, 4, b5, 5, m6, 6, m7, M7`）を自動計算し、ラベルモードが`interval`ならその度数を表示します。ルートと同じ音（オクターブ違いを含む）は自動的に強調表示（形が変わる・色が変わる）されます。
+Marking any note with `label: root` auto-computes each note's interval degree (`1, b2, 2, m3, 3, 4, b5, 5, m6, 6, m7, M7`) relative to the tuning, and shows it when label mode is `interval`. Notes matching the root's pitch class (including other octaves) are automatically highlighted (different shape and/or color).
 
-この自動計算は1オクターブ内でしか判定できないため、9th/11th/13thなどのテンションは2nd/4th/b5と区別できません。正確に表示したい場合は、個々の音の`label`（例: `label: "9"`）、または図全体の`title`（例: `title: Cmaj9`）で明示的に上書きしてください。
+This calculation can't distinguish tensions beyond one octave — e.g. a 9th looks the same as a 2nd, an 11th the same as a 4th. To show them correctly, override a note's `label` (e.g. `label: "9"`) or the diagram's `title` (e.g. `title: Cmaj9`) explicitly.
 
-## 複数の図を横に並べる（`diagrams`）
+## Multiple diagrams side by side (`diagrams`)
 
-別々の```fretboardブロックを連続して書くだけでは、実際に横に並ぶかどうかは**Obsidian側がMarkdownブロックをどうラップするか**に依存し、CSSスニペットを当てても効かない場合があります（Obsidianが各コードブロックをさらに外側の要素でブロック表示にラップしていて、プラグイン側からは触れないケースがあるため）。
+Writing separate ```fretboard blocks back to back doesn't reliably place them side by side — that depends on how Obsidian itself wraps markdown blocks, which a CSS snippet can't always override (Obsidian sometimes wraps each code block in an outer element the plugin has no access to).
 
-これを確実に行うため、**1つの```fretboardブロックの中に複数の図をまとめて書く`diagrams`記法**を用意しています。この場合、プラグインが1つのコードブロックのコンテナの中で横並びのレイアウト（flexbox）を自前で組み立てるため、Obsidianのブロックラップ方法に左右されず確実に横並びになります。
+To make this reliable, use the **`diagrams` syntax**: several diagrams in one ```fretboard block. The plugin builds its own flexbox layout entirely inside that one block's container, so it doesn't depend on how Obsidian wraps blocks at all.
 
 ```fretboard
 diagrams:
@@ -194,22 +200,26 @@ diagrams:
       - [1, 1]
 ```
 
-- `diagrams`（配列）を使う場合、トップレベルに`notes`など他のキーを混在させることはできません（`diagrams`のみを持つブロックとして扱われます）。
-- `diagrams`の各要素は、単一の図とまったく同じキー（`title`, `startFret`, `notes`, `size`, `orientation`など）を使えます。
-- 折り返しはブラウザの幅に応じて自動的に行われます（横に入りきらなければ次の行へ）。
-- エラーが起きた場合は`diagrams[0].notes`のように、どの図の何が問題かを示すエラーメッセージが表示されます。
+- A block using `diagrams` (a list) can't mix in other top-level keys like `notes` — it's treated purely as a multi-diagram block.
+- Each entry in `diagrams` accepts exactly the same keys as a single diagram (`title`, `startFret`, `notes`, `size`, `orientation`, ...).
+- Wrapping happens automatically based on the available width.
+- Errors are reported with the diagram's index, e.g. `diagrams[0].notes`.
 
-## エラー処理
+## Error handling
 
-- **Local（ブロックのYAML）:** 構文エラーや不正な値がある場合、プラグインをクラッシュさせずに、そのコードブロック内に赤字でエラー内容を表示します。
-- **Global（Vault共通ファイル）:** `fretboard-renderer.yaml` に構文エラーがある場合、Vault内の描画全体をクラッシュさせず、Obsidianの通知（Notice）で一度だけエラーを表示した上でSystem設定にフォールバックします。
-- **未知のキー（タイポ検出）:** Local・Global問わず、`frets` を `flets` と書き間違えるなど認識できないキーがあった場合は、黙って無視せず（＝何も起きたように見えない状態にはせず）エラーとして表示します。`notes` / `barre` / `boxes` の各エントリ内のキーも同様にチェックされます。
+- **Local (a block's YAML):** A syntax error or invalid value doesn't crash the plugin — it shows a red error message inside that code block.
+- **Global (vault-wide file):** A syntax error in `fretboard-renderer.yaml` doesn't break every diagram in the vault — it shows a one-time Obsidian notice and falls back to System settings.
+- **Unknown keys (typo detection):** Both Local and Global reject unrecognized keys (e.g. `flets` instead of `frets`) with an explicit error, rather than silently ignoring them — a silently-ignored typo looks like nothing happened, which is much harder to debug. This also applies to keys inside `notes` / `barre` / `boxes` entries.
 
-## 開発コマンド
+## Development
 
 ```bash
-npm install      # 依存関係のインストール
-npm run dev       # esbuildのウォッチビルド（開発中はこれを起動しておく）
-npm run build     # 型チェック + 本番ビルド（main.js を生成）
-npm test          # vitestによる単体テスト
+npm install    # install dependencies
+npm run dev    # esbuild watch build (keep this running while developing)
+npm run build  # type-check + production build (produces main.js)
+npm test       # unit tests via vitest
 ```
+
+## License
+
+[MIT](LICENSE)

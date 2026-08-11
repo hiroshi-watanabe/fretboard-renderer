@@ -14,9 +14,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 		containerEl.empty();
 		const settings = this.plugin.settings;
 
-		containerEl.createEl("h2", { text: "Fretboard Renderer" });
-
-		containerEl.createEl("h3", { text: "Layout & Dimensions" });
+		new Setting(containerEl).setName("Layout & dimensions").setHeading();
 
 		new Setting(containerEl)
 			.setName("Orientation")
@@ -90,7 +88,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "Display & Style" });
+		new Setting(containerEl).setName("Display & style").setHeading();
 
 		new Setting(containerEl)
 			.setName("Label mode")
@@ -178,7 +176,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "Note Appearance" });
+		new Setting(containerEl).setName("Note appearance").setHeading();
 
 		new Setting(containerEl)
 			.setName("Note size (px)")
@@ -210,7 +208,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 					})
 			);
 
-		containerEl.createEl("h3", { text: "Tuning & Fallback" });
+		new Setting(containerEl).setName("Tuning & fallback").setHeading();
 
 		new Setting(containerEl)
 			.setName("Default tuning")

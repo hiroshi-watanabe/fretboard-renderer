@@ -10,8 +10,8 @@
 		"test": "vitest run",
 		"test:watch": "vitest"
 	},
-	"keywords": [],
-	"author": "",
+	"keywords": ["obsidian-plugin", "guitar", "fretboard", "music-theory"],
+	"author": "Hiroshi Watanabe",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/js-yaml": "^4.0.9",
