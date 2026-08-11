@@ -1,0 +1,116 @@
+.fretboard-block {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.fretboard-svg {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 0.5em;
+}
+
+.fretboard-title {
+	font-size: 13px;
+	font-weight: 600;
+	fill: var(--text-normal);
+}
+
+.fretboard-fret-line,
+.fretboard-string-line {
+	stroke: var(--background-modifier-border);
+	stroke-width: 1.5;
+}
+
+.fretboard-fret-line.is-nut.is-nut-thick {
+	stroke: var(--text-normal);
+	stroke-width: 5;
+}
+
+.fretboard-fret-line.is-nut:not(.is-nut-thick) {
+	stroke: var(--text-normal);
+	stroke-width: 1.5;
+}
+
+.fretboard-startfret,
+.fretboard-fret-number {
+	font-size: 10px;
+	fill: var(--text-muted);
+}
+
+.fretboard-box {
+	fill: none;
+	stroke: var(--text-muted);
+	stroke-width: 1.25;
+}
+
+.fretboard-barre {
+	stroke: var(--text-muted);
+	opacity: 0.55;
+}
+
+.fretboard-path {
+	fill: none;
+	stroke: var(--text-muted);
+	stroke-width: 1.5;
+}
+
+.fretboard-shape {
+	stroke: var(--text-normal);
+	stroke-width: 1.5;
+}
+
+.fretboard-shape.is-filled {
+	fill: var(--text-normal);
+}
+
+.fretboard-shape.is-outlined {
+	fill: var(--background-primary);
+}
+
+.fretboard-shape.is-ghost {
+	opacity: 0.55;
+}
+
+.fretboard-shape.fretboard-note--root {
+	stroke: var(--interactive-accent);
+}
+
+.fretboard-shape.fretboard-note--root.is-filled {
+	fill: var(--interactive-accent);
+}
+
+.fretboard-label {
+	/* font-size is set per-note via inline style (System `labelFontSize` + per-note adjust). */
+	font-weight: 600;
+	pointer-events: none;
+}
+
+.fretboard-label.is-on-filled {
+	fill: var(--text-on-accent);
+}
+
+.fretboard-label.is-on-outlined {
+	fill: var(--text-normal);
+}
+
+.fretboard-finger {
+	font-size: 8px;
+	fill: var(--text-muted);
+}
+
+.fretboard-mute {
+	stroke: var(--text-muted);
+	stroke-width: 1.75;
+	stroke-linecap: round;
+}
+
+.fretboard-error {
+	color: var(--text-error);
+	background-color: var(--background-modifier-error);
+	border-radius: 4px;
+	padding: 0.5em 0.75em;
+	white-space: pre-wrap;
+	font-family: var(--font-monospace);
+	font-size: 0.85em;
+}

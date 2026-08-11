@@ -1,0 +1,10 @@
+{
+	"id": "fretboard-renderer",
+	"name": "Fretboard Renderer",
+	"version": "0.1.0",
+	"minAppVersion": "1.4.0",
+	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced code blocks.",
+	"author": "wataame1go",
+	"authorUrl": "",
+	"isDesktopOnly": false
+}

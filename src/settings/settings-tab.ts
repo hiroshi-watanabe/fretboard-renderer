@@ -1,0 +1,242 @@
+import { App, PluginSettingTab, Setting } from "obsidian";
+import type FretboardRendererPlugin from "../main";
+
+export class FretboardSettingTab extends PluginSettingTab {
+	plugin: FretboardRendererPlugin;
+
+	constructor(app: App, plugin: FretboardRendererPlugin) {
+		super(app, plugin);
+		this.plugin = plugin;
+	}
+
+	display(): void {
+		const { containerEl } = this;
+		containerEl.empty();
+		const settings = this.plugin.settings;
+
+		containerEl.createEl("h2", { text: "Fretboard Renderer" });
+
+		containerEl.createEl("h3", { text: "Layout & Dimensions" });
+
+		new Setting(containerEl)
+			.setName("Orientation")
+			.setDesc("Direction the fretboard is drawn in.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("horizontal", "Horizontal")
+					.addOption("vertical", "Vertical")
+					.setValue(settings.orientation)
+					.onChange(async (value) => {
+						settings.orientation = value as typeof settings.orientation;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Strings")
+			.setDesc("Default number of strings.")
+			.addText((text) =>
+				text
+					.setValue(String(settings.strings))
+					.onChange(async (value) => {
+						const n = parseInt(value, 10);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.strings = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Fret count")
+			.setDesc("Default number of frets to draw when a block does not specify one.")
+			.addText((text) =>
+				text
+					.setValue(String(settings.fretCount))
+					.onChange(async (value) => {
+						const n = parseInt(value, 10);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.fretCount = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("String spacing (px)")
+			.addText((text) =>
+				text
+					.setValue(String(settings.stringSpacing))
+					.onChange(async (value) => {
+						const n = parseInt(value, 10);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.stringSpacing = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Fret spacing (px)")
+			.addText((text) =>
+				text
+					.setValue(String(settings.fretSpacing))
+					.onChange(async (value) => {
+						const n = parseInt(value, 10);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.fretSpacing = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		containerEl.createEl("h3", { text: "Display & Style" });
+
+		new Setting(containerEl)
+			.setName("Label mode")
+			.setDesc("What to print inside each note dot by default.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("interval", "Interval (degree)")
+					.addOption("note", "Note name")
+					.addOption("none", "None")
+					.setValue(settings.labelMode)
+					.onChange(async (value) => {
+						settings.labelMode = value as typeof settings.labelMode;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Accidental")
+			.setDesc("Preferred spelling for note-name labels.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("sharp", "Sharp (#)")
+					.addOption("flat", "Flat (b)")
+					.setValue(settings.accidental)
+					.onChange(async (value) => {
+						settings.accidental = value as typeof settings.accidental;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Default shape")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("circle", "Circle")
+					.addOption("square", "Square")
+					.addOption("triangle", "Triangle")
+					.setValue(settings.defaultShape)
+					.onChange(async (value) => {
+						settings.defaultShape = value as typeof settings.defaultShape;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Fill style")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("filled", "Filled (dark dot, light text)")
+					.addOption("outlined", "Outlined (light dot, dark text)")
+					.setValue(settings.fillStyle)
+					.onChange(async (value) => {
+						settings.fillStyle = value as typeof settings.fillStyle;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Nut style")
+			.setDesc("How the fret-0 line is drawn.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("thick", "Thick line")
+					.addOption("double", "Double line")
+					.setValue(settings.nutStyle)
+					.onChange(async (value) => {
+						settings.nutStyle = value as typeof settings.nutStyle;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Fret numbering")
+			.setDesc('"Inlay markers" shows only the standard fretboard inlay positions (3, 5, 7, 9, 12, 15, ...).')
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("all", "Show all")
+					.addOption("dotted", "Only fretted frets")
+					.addOption("inlay", "Inlay markers only")
+					.addOption("none", "Hide")
+					.setValue(settings.fretNumbering)
+					.onChange(async (value) => {
+						settings.fretNumbering = value as typeof settings.fretNumbering;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		containerEl.createEl("h3", { text: "Note Appearance" });
+
+		new Setting(containerEl)
+			.setName("Note size (px)")
+			.setDesc("Base radius of each note dot. Per-note `sizeAdjust` (-5..5) nudges from this.")
+			.addText((text) =>
+				text
+					.setValue(String(settings.noteSize))
+					.onChange(async (value) => {
+						const n = parseInt(value, 10);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.noteSize = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Label font size (px)")
+			.setDesc("Base font size for note labels. Per-note `labelSizeAdjust` (-5..5) nudges from this.")
+			.addText((text) =>
+				text
+					.setValue(String(settings.labelFontSize))
+					.onChange(async (value) => {
+						const n = parseInt(value, 10);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.labelFontSize = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		containerEl.createEl("h3", { text: "Tuning & Fallback" });
+
+		new Setting(containerEl)
+			.setName("Default tuning")
+			.setDesc("Comma separated absolute pitches, lowest string first (e.g. E,A,D,G,B,E).")
+			.addText((text) =>
+				text
+					.setValue(settings.defaultTuning)
+					.onChange(async (value) => {
+						settings.defaultTuning = value;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Omitted string behavior")
+			.setDesc("How to render strings that are not mentioned in a block's notes.")
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("open", "Treat as open (0)")
+					.addOption("muted", "Treat as muted (x)")
+					.addOption("none", "Draw nothing")
+					.setValue(settings.omittedStringBehavior)
+					.onChange(async (value) => {
+						settings.omittedStringBehavior = value as typeof settings.omittedStringBehavior;
+						await this.plugin.saveSettings();
+					})
+			);
+	}
+}
