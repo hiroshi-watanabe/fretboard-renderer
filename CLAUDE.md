@@ -24,7 +24,7 @@ Obsidianのプラグイン設定画面から、以下の項目をデフォルト
 *   **String Spacing & Fret Spacing:** SVG描画時のピクセル幅
 
 #### [Display & Style]
-*   **Label Mode:** `interval` (度数/デフォルト) / `note` (音名) / `none`
+*   **Label Mode:** `interval` (度数/デフォルト) / `note` (音名) / `none`。`note`は絶対モード（4.1節: `startFret`指定、または明示的な開放弦を含む）の時だけ音名を自動表示する。相対/移動モードでは実際の音がポジションに依存し確定しないため、`note`モードでも自動ラベルは表示しない（度数は形が決まれば常に一意なので`interval`モードはこの制約を受けない）。
 *   **Accidental:** `sharp` (#) / `flat` (b)
 *   **Default Shape:** `circle` (〇/デフォルト) / `square` (□) / `triangle` (△)
 *   **Fill Style:** `filled` (黒塗り・文字白/デフォルト) / `outlined` (白抜き・文字黒)

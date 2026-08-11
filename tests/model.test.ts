@@ -65,6 +65,37 @@ describe("resolveFretboardModel", () => {
 		expect(model.notes.every((n) => n.label === "")).toBe(true);
 	});
 
+	it("shows note names in note-label mode when the diagram is absolute (startFret given)", () => {
+		const settings = { ...DEFAULT_SETTINGS, labelMode: "note" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [{ s: 6, f: 1 }], // low E + 1 = F
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.notes[0].label).toBe("F");
+	});
+
+	it("shows note names in note-label mode when an explicit open string anchors the position", () => {
+		const settings = { ...DEFAULT_SETTINGS, labelMode: "note" as const };
+		const config: FretboardBlockConfig = {
+			notes: [{ s: 6, f: 0 }], // open low E, no startFret
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.notes[0].label).toBe("E");
+	});
+
+	it("suppresses note names in note-label mode for a relative/movable shape (no startFret, no open string)", () => {
+		const settings = { ...DEFAULT_SETTINGS, labelMode: "note" as const };
+		const config: FretboardBlockConfig = {
+			notes: [
+				{ s: 6, f: 5 },
+				{ s: 5, f: 7 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.notes.every((n) => n.label === "")).toBe(true);
+	});
+
 	it("keeps custom labels verbatim regardless of label mode", () => {
 		const config: FretboardBlockConfig = {
 			startFret: 0,

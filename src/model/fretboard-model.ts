@@ -135,7 +135,11 @@ export function resolveFretboardModel(
 					autoLabel = degreeForDelta(delta);
 				}
 			}
-			if (settings.labelMode === "note") {
+			// Absolute pitch is only meaningful when the diagram is anchored to a real
+			// fretboard position; a relative/movable shape's actual notes depend on
+			// where you play it, so note names would be misleading (unlike intervals,
+			// which are shape-relative and stay valid wherever the pattern is played).
+			if (settings.labelMode === "note" && !isRelative) {
 				autoLabel = pitchClassToName(pitchClass, settings.accidental);
 			}
 		}
