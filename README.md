@@ -158,21 +158,46 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 
 この自動計算は1オクターブ内でしか判定できないため、9th/11th/13thなどのテンションは2nd/4th/b5と区別できません。正確に表示したい場合は、個々の音の`label`（例: `label: "9"`）、または図全体の`title`（例: `title: Cmaj9`）で明示的に上書きしてください。
 
-## 複数の図を横に並べる
+## 複数の図を横に並べる（`diagrams`）
 
-```fretboard```ブロックを空行を挟まず連続して書くと、内部的には各ブロックのコンテナ要素に `display: inline-block` を指定しており、横に並んで折り返し表示されることを狙っています。`size`を小さくして複数のコードダイアグラムを並べる、といった使い方を想定しています。
+別々の```fretboardブロックを連続して書くだけでは、実際に横に並ぶかどうかは**Obsidian側がMarkdownブロックをどうラップするか**に依存し、CSSスニペットを当てても効かない場合があります（Obsidianが各コードブロックをさらに外側の要素でブロック表示にラップしていて、プラグイン側からは触れないケースがあるため）。
 
-ただし、実際に横並びになるかどうかは**Obsidian側がMarkdownブロックをどうラップするか**（Reading ViewとLive Previewで構造が異なる場合がある）に依存し、プラグイン単体では確実に制御できないことがあります。もし横に並ばない場合は、Obsidianの **CSS snippets** 機能（設定 → 外観 → CSSスニペット、`.obsidian/snippets/` にファイルを置いて有効化）で調整できます。プラグイン本体の `styles.css` は直接編集せず、スニペット側で上書きしてください。以下は`.fretboard-block`要素を対象にしたスニペットの例です。
+これを確実に行うため、**1つの```fretboardブロックの中に複数の図をまとめて書く`diagrams`記法**を用意しています。この場合、プラグインが1つのコードブロックのコンテナの中で横並びのレイアウト（flexbox）を自前で組み立てるため、Obsidianのブロックラップ方法に左右されず確実に横並びになります。
 
-```css
-/* .obsidian/snippets/fretboard-row.css */
-.fretboard-block {
-	display: inline-block !important;
-	vertical-align: top;
-}
+```fretboard
+diagrams:
+  - title: Cmaj7
+    startFret: 0
+    size: 0.6
+    notes:
+      - {s: 5, f: 3, label: root}
+      - [4, 2]
+      - [3, 0]
+      - [2, 0]
+  - title: Dm7
+    startFret: 0
+    size: 0.6
+    notes:
+      - {s: 4, f: 0, label: root}
+      - [3, 2]
+      - [2, 1]
+      - [1, 1]
+  - title: G7
+    startFret: 0
+    size: 0.6
+    notes:
+      - {s: 6, f: 3, label: root}
+      - [5, 2]
+      - [4, 0]
+      - [3, 0]
+      - [2, 0]
+      - [1, 1]
 ```
 
-それでも並ばない場合は、Obsidianが各コードブロックをさらに外側の要素でブロック表示にラップしている可能性があります。ブラウザの開発者ツール（Ctrl+Shift+I）で `.fretboard-block` の親要素を確認し、その要素にも同様のルールを追加してください。
+- `diagrams`（配列）を使う場合、トップレベルに`notes`など他のキーを混在させることはできません（`diagrams`のみを持つブロックとして扱われます）。
+- `diagrams`の各要素は、単一の図とまったく同じキー（`title`, `startFret`, `notes`, `size`, `orientation`など）を使えます。
+- 折り返しはブラウザの幅に応じて自動的に行われます（横に入りきらなければ次の行へ）。
+- エラーが起きた場合は`diagrams[0].notes`のように、どの図の何が問題かを示すエラーメッセージが表示されます。
 
 ## エラー処理
 

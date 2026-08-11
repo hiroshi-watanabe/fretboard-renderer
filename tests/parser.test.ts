@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { parseFretboardBlock } from "../src/parser/parse";
 import { FretboardParseError } from "../src/parser/errors";
+import type { FretboardBlockConfig } from "../src/types";
+
+function parseSingle(source: string): FretboardBlockConfig {
+	const parsed = parseFretboardBlock(source);
+	if (parsed.kind !== "single") throw new Error("expected a single-diagram block");
+	return parsed.config;
+}
 
 describe("parseFretboardBlock", () => {
 	it("requires the notes property", () => {
@@ -8,7 +15,7 @@ describe("parseFretboardBlock", () => {
 	});
 
 	it("normalizes object-form notes", () => {
-		const config = parseFretboardBlock(`
+		const config = parseSingle(`
 notes:
   - {s: 6, f: 5, label: root, shape: square}
   - {s: 5, f: 7, finger: 3, ghost: true}
@@ -20,7 +27,7 @@ notes:
 	});
 
 	it("normalizes array-shorthand notes", () => {
-		const config = parseFretboardBlock(`
+		const config = parseSingle(`
 notes:
   - [6, 8]
   - [5, 5, "root"]
@@ -32,7 +39,7 @@ notes:
 	});
 
 	it("accepts muted strings written as x", () => {
-		const config = parseFretboardBlock(`
+		const config = parseSingle(`
 notes:
   - {s: 6, f: x}
 `);
@@ -40,7 +47,7 @@ notes:
 	});
 
 	it("parses the full example from the spec", () => {
-		const config = parseFretboardBlock(`
+		const config = parseSingle(`
 title: Am Pentatonic (Box 1)
 visible: 1-6
 startFret: 5
@@ -86,7 +93,7 @@ notes:
 	});
 
 	it("parses local orientation, size, and spacing adjust overrides", () => {
-		const config = parseFretboardBlock(`
+		const config = parseSingle(`
 orientation: vertical
 size: 0.6
 fretSpacingAdjust: -3
@@ -119,7 +126,7 @@ notes:
 	});
 
 	it("parses per-note color, fillStyle, sizeAdjust, and labelSizeAdjust (object form only)", () => {
-		const config = parseFretboardBlock(`
+		const config = parseSingle(`
 notes:
   - {s: 6, f: 0, color: red, fillStyle: outlined, sizeAdjust: -3, labelSizeAdjust: 2}
 `);
@@ -161,5 +168,47 @@ notes:
 		expect(() =>
 			parseFretboardBlock('boxes:\n  - {frets: "5-8", color: red}\nnotes:\n  - {s: 6, f: 0}')
 		).toThrow(FretboardParseError);
+	});
+
+	describe("diagrams (multiple side-by-side diagrams in one block)", () => {
+		it("parses a list of diagrams, each with the single-diagram schema", () => {
+			const parsed = parseFretboardBlock(`
+diagrams:
+  - title: Cmaj7
+    startFret: 0
+    notes:
+      - {s: 5, f: 3, label: root}
+  - title: Dm7
+    startFret: 0
+    notes:
+      - {s: 4, f: 0, label: root}
+`);
+			if (parsed.kind !== "multi") throw new Error("expected a multi-diagram block");
+			expect(parsed.diagrams).toHaveLength(2);
+			expect(parsed.diagrams[0].title).toBe("Cmaj7");
+			expect(parsed.diagrams[1].title).toBe("Dm7");
+		});
+
+		it("rejects an empty diagrams list", () => {
+			expect(() => parseFretboardBlock("diagrams: []")).toThrow(FretboardParseError);
+		});
+
+		it("rejects a diagram entry missing notes, with a context-prefixed error", () => {
+			expect(() =>
+				parseFretboardBlock("diagrams:\n  - {title: Foo}\n  - {notes: [{s: 6, f: 0}]}")
+			).toThrow(/diagrams\[0\]\.notes/);
+		});
+
+		it("rejects an unknown key inside a diagram entry", () => {
+			expect(() =>
+				parseFretboardBlock("diagrams:\n  - {flets: 3, notes: [{s: 6, f: 0}]}")
+			).toThrow(FretboardParseError);
+		});
+
+		it("rejects mixing diagrams with other top-level keys", () => {
+			expect(() =>
+				parseFretboardBlock("diagrams:\n  - {notes: [{s: 6, f: 0}]}\ntitle: Foo")
+			).toThrow(FretboardParseError);
+		});
 	});
 });

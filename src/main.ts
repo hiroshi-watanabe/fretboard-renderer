@@ -6,7 +6,7 @@ import { GLOBAL_CONFIG_PATH, parseVaultConfig } from "./settings/vault-config";
 import { parseFretboardBlock } from "./parser/parse";
 import { FretboardParseError } from "./parser/errors";
 import { resolveFretboardModel } from "./model/fretboard-model";
-import { renderFretboard } from "./render/render-fretboard";
+import { renderFretboard, renderFretboardRow } from "./render/render-fretboard";
 
 export default class FretboardRendererPlugin extends Plugin {
 	/** System layer: plugin-wide defaults from the Settings UI. */
@@ -34,11 +34,15 @@ export default class FretboardRendererPlugin extends Plugin {
 			// display:inline-block (see styles.css) so consecutive blocks can sit side by side.
 			el.addClass("fretboard-block");
 			try {
-				const config = parseFretboardBlock(source);
+				const parsed = parseFretboardBlock(source);
 				// Local (block YAML) > Global (vault file) > System (plugin settings).
 				const effectiveSettings: FretboardPluginSettings = { ...this.settings, ...this.globalConfig };
-				const model = resolveFretboardModel(config, effectiveSettings);
-				renderFretboard(el, model);
+				if (parsed.kind === "single") {
+					renderFretboard(el, resolveFretboardModel(parsed.config, effectiveSettings));
+				} else {
+					const models = parsed.diagrams.map((config) => resolveFretboardModel(config, effectiveSettings));
+					renderFretboardRow(el, models);
+				}
 			} catch (e) {
 				renderError(el, e);
 			}

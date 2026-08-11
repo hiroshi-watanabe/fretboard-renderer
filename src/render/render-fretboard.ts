@@ -4,7 +4,28 @@ import { parseRange } from "../parser/range";
 import { createSvgRoot, svgEl } from "./svg-builder";
 import { Layout, stringAxisIndex } from "./layout";
 
+/** Renders a single diagram, replacing the container's contents with its SVG. */
 export function renderFretboard(container: HTMLElement, model: ResolvedModel): void {
+	container.empty();
+	container.appendChild(buildFretboardSvg(model));
+}
+
+/**
+ * Renders several diagrams side by side inside one container. This lives entirely
+ * inside `container` (which the plugin fully controls), so the layout doesn't depend
+ * on how Obsidian happens to wrap separate code blocks — unlike relying on adjacent
+ * ```fretboard blocks to sit next to each other via CSS, which isn't reliably
+ * controllable from outside Obsidian's own rendering.
+ */
+export function renderFretboardRow(container: HTMLElement, models: ResolvedModel[]): void {
+	container.empty();
+	const row = container.createDiv({ cls: "fretboard-row" });
+	for (const model of models) {
+		row.appendChild(buildFretboardSvg(model));
+	}
+}
+
+function buildFretboardSvg(model: ResolvedModel): SVGSVGElement {
 	const rowsCount = model.visibleEnd - model.visibleStart + 1;
 	const headerSize = model.fretSpacing * 0.6;
 	const titleHeight = model.title ? 26 : 6;
@@ -38,8 +59,7 @@ export function renderFretboard(container: HTMLElement, model: ResolvedModel): v
 	drawPaths(svg, layout, model);
 	for (const note of model.notes) drawNote(svg, layout, model, note, baselineRadius);
 
-	container.empty();
-	container.appendChild(svg);
+	return svg;
 }
 
 /**

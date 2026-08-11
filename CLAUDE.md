@@ -109,7 +109,33 @@ notes:
 *   **`boxes` (Array):** スケールのポジション等を枠線で囲む。`{frets: "5-8", strings: "1-6", style: "dashed"}` など。
 *   **`paths` (Array):** ドット同士を線で結ぶ。`[[6,5], [6,8], [5,5]]` のように座標の配列を渡し、SVGの `<polyline>` で描画。
 
-複数の```fretboardブロックを空行を挟まず連続して書くと、横に並んで（折り返しながら）表示されることを狙う（`.fretboard-block`要素に`display: inline-block`を指定）。ただし実際に横並びになるかはObsidian側のMarkdownレンダリング構造（Reading View / Live Previewでのブロックのラップ方法）に依存し、プラグイン側から確実に制御できない場合がある。その場合はObsidianの「CSS snippets」機能（`.obsidian/snippets/`、設定画面から有効化）でユーザー自身がレイアウトを調整できるよう、`.fretboard-block` / `.fretboard-svg` 等の安定したクラス名をpublic APIとして提供すること。プラグイン本体の `styles.css` をユーザーが直接編集することは想定しない。
+### 3.3 複数の図を横に並べる (`diagrams`)
+別々の```fretboardブロックを連続して書いても、それらが実際に横並びになるかはObsidian側のMarkdownレンダリング構造（Reading View / Live Previewでのブロックのラップ方法）に依存し、プラグイン側から確実に制御できない（CSSスニペットで`.fretboard-block { display: inline-block }`等を当てても効かないケースがある）。これを回避するため、**1つの```fretboardブロックの中に複数の図を並べて描画する`diagrams`という書き方をサポートする**こと。
+
+```fretboard
+diagrams:
+  - title: Cmaj7
+    startFret: 0
+    size: 0.6
+    notes:
+      - {s: 5, f: 3, label: root}
+      - [4, 2]
+      - [3, 0]
+      - [2, 0]
+  - title: Dm7
+    startFret: 0
+    size: 0.6
+    notes:
+      - {s: 4, f: 0, label: root}
+      - [3, 2]
+      - [2, 1]
+      - [1, 1]
+```
+
+*   トップレベルのキーが`notes`ではなく`diagrams`（図の配列）である場合、この「複数図モード」として扱う。`diagrams`と`notes`など他のトップレベルキーを同時に指定するのはエラーとする。
+*   `diagrams`の各要素は、通常の単一の図とまったく同じスキーマ（3.1, 3.2節の全項目）を持つ。
+*   複数図モードでは、1つのコードブロックのコンテナ要素の中に、プラグインが自前でflexboxのラッパー（例: `display:flex; flex-wrap:wrap;`）を生成し、その中に各図のSVGを並べて描画すること。これにより、Obsidianがコードブロックをどうラップするかに関わらず、確実に横並び表示できる（レイアウトが完全にプラグインの管理下にあるDOM内で完結するため）。
+*   エラー処理は3.1/3.2と同様、`diagrams[0].notes`のように該当する図のインデックスを含めたエラーメッセージにすること。
 
 ## 4. Core Logic
 
