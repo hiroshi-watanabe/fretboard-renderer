@@ -102,7 +102,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 					},
 					{
 						name: "Naming mode",
-						desc: 'Auto-generated title: name a chord (e.g. "Am7") or, when the notes exactly match a known scale, name the scale instead (e.g. "A Minor Pentatonic").',
+						desc: 'Auto-generated title: name a chord (e.g. "Am7"), or reverse-engineer the best-fitting scale for the notes present (e.g. "A Minor Pentatonic"), flagging leftover notes as passing notes (e.g. "A Minor Pentatonic (+2)").',
 						control: {
 							type: "dropdown",
 							key: "namingMode",

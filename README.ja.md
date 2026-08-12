@@ -43,7 +43,7 @@ notes:
 ![点線の枠とドット同士を結ぶ線を使った、ムーバブルなペンタトニックのスケールボックス図](images/relative-scale-box.png)
 
 ### コードとして名付けるか、スケールとして名付けるか
-デフォルトでは自動生成されるタイトルはコード／アルペジオとして命名されます（例: `Am7add11`）。同じ音をスケールとして読めば別の名前（マイナーペンタトニック等）になります。**Naming mode**を`scale`に切り替えると（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`namingMode: scale`）、音の構成が既知のスケールと完全一致する場合にスケール名がタイトルになります（例: `A Minor Pentatonic`、ムーバブルなパターンなら`□ Minor Pentatonic`）。スケールの全リストはリファレンスの[Naming mode](#naming-modeコード名スケール名の自動生成切り替え)を参照してください。
+デフォルトでは自動生成されるタイトルはコード／アルペジオとして命名されます（例: `Am7add11`）。同じ音をスケールとして読めば別の名前（マイナーペンタトニック等）になります。**Naming mode**を`scale`に切り替えると（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`namingMode: scale`）、タイトルは常に最もマッチするスケール名になります（例: `A Minor Pentatonic`、ムーバブルなパターンなら`□ Minor Pentatonic`）——コピーしたフレーズ／ソロをバッキングコードのRootに対して逆算したいときに便利です。マッチしたスケールに含まれない音は経過音として`A Minor Pentatonic (+2)`のように併記され、指板図上でもゴースト表示されます。スケールの全リストとベストフィットの判定方法はリファレンスの[Naming mode](#naming-modeコード名スケール名の自動生成切り替え)を参照してください。
 
 ### 正確なコード名: sus・add・テンション・分数コード
 自動生成タイトルは、ルート音と基本クオリティだけでなく実際のコード理論に基づいて推定します: 3度が無いときは`sus2`/`sus4`/パワーコード、7度が無いときは`add9`/`add11`、ドミナント7thでテンションが`7`を置き換える折りたたみ表記（`C9`, `C11`, `C13`）と`maj7`/`m7`にカッコで追加するテンション表記（`Cmaj7(9)`）の使い分け、`6`/`6/9`、そして最低音がルートでない場合の`/ベース音`表記（`Cmaj7/E`、相対モードなら`□m7/bVII`）まで対応します。表記の流儀そのものは、ポップス標準の**Standard**・理論重視の**Berklee**・Real Book形式の**Jazz**の3種類から**Chord symbol style**（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`chordSymbolStyle`）で切り替えられます。詳しいルールは[Chord symbol style（コード表記スタイル）と高度なコード名推定](#chord-symbol-styleコード表記スタイルと高度なコード名推定)を参照してください。
@@ -109,7 +109,7 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Fret spacing | フレット間隔（px） | `50` |
 | Label mode | `interval`（度数） / `note`（音名） / `none` | `interval` |
 | Accidental | `sharp`（#） / `flat`（b） | `sharp` |
-| Naming mode | `chord`（コード名を自動生成） / `scale`（既知のスケールと完全一致した場合にスケール名を自動生成、[下記参照](#naming-modeコード名スケール名の自動生成切り替え)） | `chord` |
+| Naming mode | `chord`（コード名を自動生成） / `scale`（最もマッチするスケール名を自動生成、[下記参照](#naming-modeコード名スケール名の自動生成切り替え)） | `chord` |
 | Chord symbol style | `standard` / `berklee` / `jazz`、[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | `standard` |
 | Omit notation | オン/オフ。理論上期待される構成音の省略を明示する（例: `C(omit3)`, `G7(omit3)`, `(omit5)`）。デフォルトはオフ（ギターでは5度の省略が非常に多く、常に表示すると煩雑になるため）。[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | オフ |
 | Show inversions | オン/オフ。単なる転回形（コード自体の3度・5度・7度が最低音に来ているだけ、例: `C/E`）の場合にスラッシュ表記を表示するか。デフォルトはオフ（実際のコード譜では転回形をあえて明示しないパターンの方が多いため）。[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | オフ |
@@ -230,22 +230,38 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 
 ### Naming mode（コード名／スケール名の自動生成切り替え）
 
-同じ音の集まりでも、コード／アルペジオとして読むか（例: `Am7add11`）、スケールとして読むか（例: マイナーペンタトニック）で名前が変わります。**Naming mode**は自動生成タイトルがどちらを使うかを切り替えます:
+同じ音の集まりでも、コード／アルペジオとして読むか（例: `Am7add11`）、あるいは——弾いたフレーズ／ソロを指板図にコピーしてバッキングコードのRootを指定したときのように——それが最も由来していそうなスケールとして読むかで名前が変わります。**Naming mode**は自動生成タイトルがどちらを使うかを切り替えます:
 
 - **`chord`**（デフォルト）: 従来通りコード／アルペジオ名を生成します。
-- **`scale`**: 音の構成が下記のいずれかのスケールと完全一致する場合、スケール名を生成します（例: `A Minor Pentatonic`、相対モードなら`□ Minor Pentatonic`）。完全一致しない場合は一意にスケールを特定できない（部分一致は曖昧になるため）ため、`chord`と同じ命名にフォールバックします。
+- **`scale`**: 音の構成が下記のスケールと完全一致しなくても、常に最もマッチするスケール名を生成します（`chord`名へのフォールバックはしません）。マッチしたスケールに含まれない音は経過音として括弧書きで併記されます（例: `A Minor Pentatonic (+2)`、相対モードなら`□ Minor Pentatonic (+2)`。完全一致の場合は括弧書きなし）。該当する音は指板図上でも`ghost: true`を指定した場合と同じ見た目（ゴースト表示）になり、ひと目で経過音だと分かります。
 
 設定画面、Vault共通の`fretboard-renderer.yaml`、またはブロックごとに`namingMode: scale`で切り替えられます。
 
-現時点では西洋音楽の標準的なスケールのみに対応しています（日本の伝統音階などは未対応）:
+**ベストフィットの判定方法:** 下記の各スケールについて、そのスケール自身の構成音のうち入力に含まれるもの1つにつき+1点、含まれないもの1つにつき-1点、そして**入力にあってそのスケールに含まれない音（経過音候補）1つにつき-1点**でスコアを計算します。最もスコアの高いスケールを採用し、同点の場合はより音数の少ない（シンプルな）スケールを優先します。経過音にもペナルティを課しているのは、そうしないと「1音だけ経過音として残す小さいスケール」が「その音も含めて過不足なく説明できるスケール」に音数タイブレークで勝ってしまうためです（例: マイナーペンタトニック+自然2度という入力では、2度を経過音として残す`Minor Pentatonic`ではなく、その音も含めて説明できる`Dorian`が選ばれるべき）。この3項スコアでも、完全一致するスケールは常にそれ単体で最高スコアとなる性質は保たれます（音数の多いスーパーセットは自身の未使用音のペナルティで、音数の少ないサブセットは経過音のペナルティで、それぞれ必ず下回るため）。
+
+- **`scaleAnalyze: true`**（Local限定、デフォルトoff）: 1位の結果だけでなく、上記スコアリングによる**上位5件**をタイトルに複数行で表示します（`1. E Dorian`、`2. E Aeolian (Natural Minor)`、…）。僅差の候補を見比べたいときに使います。
+
+対応スケールは、西洋音楽の標準的なスケール群に加え、日本の平調子（Hirajoshi）・琉球（Ryukyu）の2つの五音音階ファミリーを、伝統的に名前が付いているものだけでなく**全展開形（モード）**まで網羅しています——本プラグインではRootを自由に指定できるため、同じ音の集まりでも起点を変えれば度数集合が変わり、下表の別の行になるからです:
 
 | カテゴリ | スケール |
 | :--- | :--- |
-| ペンタトニック | Major Pentatonic, Minor Pentatonic |
-| ダイアトニックモード | Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian |
-| ハーモニックマイナー系 | Harmonic Minor, Phrygian Dominant |
-| メロディックマイナー系 | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2) |
-| その他 | Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major |
+| ペンタトニック（全5展開） | Major Pentatonic, Minor Pentatonic, Suspended Pentatonic (Mode 2), Phrygian Pentatonic (Mode 3), Mixolydian Pentatonic (Mode 4) |
+| ドミナントペンタトニック（全5展開） | Dominant Pentatonic (Mode 1–5) |
+| 和音階 — 平調子(Hirajoshi)系（全5展開） | Hirajoshi, Iwato (Hirajoshi Mode 2), Hon-Kumoi-joshi (Hirajoshi Mode 3), In Sen / Kumoi / Miyakobushi (Hirajoshi Mode 4), Lydian Pentatonic / Chinese (Hirajoshi Mode 5) |
+| 和音階 — 琉球(Ryukyu)系（全5展開） | Ryukyu, Ryukyu (Mode 2), Ryukyu (Mode 3), Hindu Pentatonic (Ryukyu Mode 4), Ryukyu (Mode 5) |
+| ダイアトニックモード（全7展開） | Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian |
+| メロディックマイナー系（全7展開） | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2), Dorian b2, Lydian Augmented, Mixolydian b6 |
+| ハーモニックマイナー系（全7展開） | Harmonic Minor, Phrygian Dominant, Locrian ♮6, Ionian #5, Dorian #4, Lydian #2, Ultralocrian (Altered Diminished) |
+| ハーモニックメジャー系（全7展開） | Harmonic Major (Mode 1–7) |
+| ダブルハーモニック系（全7展開） | Double Harmonic Major (Mode 1–7)（別名: ビザンチン/アラビアン/ジプシーメジャースケール） |
+| ナポリタンメジャー系（全7展開） | Neapolitan Major (Mode 1–7) |
+| 対称音階 | Whole Tone（展開形は実質1種類のみ）, Augmented（2種類）, Diminished Whole-Half / Half-Whole（各2種類） |
+| ビバップ（各8展開） | Bebop Dominant (Mode 1–8), Bebop Major (Mode 1–8) |
+| その他 | Blues, Major Blues |
+
+上記の新規ファミリー（ハーモニックメジャー、ダブルハーモニック、ナポリタンメジャー、ドミナントペンタトニック）は、確度の高い親スケール名のみ採用し、派生モードの俗称は情報源によって表記が割れるため断定を避け、`Harmonic Major (Mode 2)`のように機械的な連番表記にしています。「陰音階（In Sen）」は既存の平調子系の1展開形と度数集合が完全に一致することが判明したため、別エントリではなくその行の別名として統合しました。
+
+その他の日本の伝統音階（都節、田舎節、律、民謡音階など）は未対応です。
 
 ### Chord symbol style（コード表記スタイル）と高度なコード名推定
 

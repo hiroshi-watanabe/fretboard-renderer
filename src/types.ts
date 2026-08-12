@@ -11,7 +11,9 @@ export type NutStyle = "thick" | "double";
 export type FretNumbering = "all" | "dotted" | "inlay" | "none";
 export type OmittedStringBehavior = "open" | "muted" | "none";
 export type BoxStyle = "solid" | "dashed";
-/** `chord` names a specific chord (e.g. "Cmaj7"); `scale` names a scale pattern (e.g. "C Dorian") when the present degrees exactly match one. */
+/** `chord` names a specific chord (e.g. "Cmaj7"); `scale` reverse-engineers the best-fitting
+ *  scale for a phrase/voicing (e.g. "C Dorian"), flagging non-matching notes as passing notes
+ *  (see `findBestFitScale` and CLAUDE.md §4.4). */
 export type NamingMode = "chord" | "scale";
 /** Notation convention for auto-generated chord suffixes, e.g. minor: "m" / "-" / "-"; major 7th: "maj7" / "maj7" / "Δ7". */
 export type ChordSymbolStyle = "standard" | "berklee" | "jazz";
@@ -112,6 +114,11 @@ export interface FretboardBlockConfig {
 	omitNotation?: boolean;
 	/** Overrides System/Global "show inversions" for this diagram's auto-generated title only. */
 	showInversions?: boolean;
+	/** Only meaningful when `namingMode` is `scale`: instead of a single best-fit title,
+	 *  shows the top 5 candidate scales stacked as separate lines, ranked by the same
+	 *  scoring rule (see `rankBestFitScales`). Local-only — an "inspect this diagram"
+	 *  toggle, not something that makes sense as a persistent System/Global default. */
+	scaleAnalyze?: boolean;
 	/** Multiplies the resolved string/fret spacing for this block only, e.g. 0.6 to shrink it. */
 	size?: number;
 	/** Pixel delta applied to the resolved fretSpacing before `size`, range -5..5. */
@@ -135,6 +142,7 @@ export interface RawFretboardBlockConfig {
 	chordSymbolStyle?: unknown;
 	omitNotation?: unknown;
 	showInversions?: unknown;
+	scaleAnalyze?: unknown;
 	size?: unknown;
 	fretSpacingAdjust?: unknown;
 	stringSpacingAdjust?: unknown;

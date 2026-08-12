@@ -126,6 +126,17 @@ notes:
 		);
 	});
 
+	it("accepts scaleAnalyze: true at the block level", () => {
+		const config = parseSingle("scaleAnalyze: true\nnotes:\n  - {s: 6, f: 5}");
+		expect(config.scaleAnalyze).toBe(true);
+	});
+
+	it("rejects a non-boolean scaleAnalyze", () => {
+		expect(() => parseFretboardBlock("scaleAnalyze: yes\nnotes:\n  - {s: 6, f: 5}")).toThrow(
+			FretboardParseError
+		);
+	});
+
 	it("rejects malformed YAML without throwing a raw error", () => {
 		expect(() => parseFretboardBlock("notes: [")).toThrow(FretboardParseError);
 	});

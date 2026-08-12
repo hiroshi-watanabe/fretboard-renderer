@@ -754,7 +754,10 @@ describe("resolveFretboardModel — naming mode (chord vs scale)", () => {
 		expect(DEFAULT_SETTINGS.namingMode).toBe("chord");
 	});
 
-	it("names a chord/arpeggio, unaffected by namingMode, when the degrees don't exactly match a known scale", () => {
+	it("never falls back to chord naming — a plain triad still gets a best-fit scale name", () => {
+		// Root + fifth + minor third: a plain minor triad. Under "scale" mode this is never
+		// named "Em" — it always commits to a best-fit scale guess (here, an exact match:
+		// all 3 notes are within Minor Pentatonic, with no leftover degrees to report).
 		const config: FretboardBlockConfig = {
 			startFret: 0,
 			namingMode: "scale",
@@ -765,7 +768,7 @@ describe("resolveFretboardModel — naming mode (chord vs scale)", () => {
 			],
 		};
 		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
-		expect(model.title).toBe("Em"); // a plain minor triad isn't a listed scale
+		expect(model.title).toBe("E Minor Pentatonic");
 	});
 
 	it("names the scale (absolute) when namingMode is scale and the degrees exactly match a known scale", () => {
@@ -816,5 +819,209 @@ describe("resolveFretboardModel — naming mode (chord vs scale)", () => {
 		};
 		const model = resolveFretboardModel(config, DEFAULT_SETTINGS); // System default is "chord"
 		expect(model.title).toBe("E Minor Pentatonic");
+	});
+});
+
+describe("resolveFretboardModel — naming mode scale, best-fit passing notes (CLAUDE.md §4.4)", () => {
+	it("no (+...) suffix on an exact match", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		// Same all-open E minor pentatonic shape as the exact-match test above.
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe("E Minor Pentatonic");
+	});
+
+	it("finds the best-fit scale and flags leftover notes as passing notes in the title", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		// E minor pentatonic (open 6-2) plus four more notes on string 1 (b2, 2, 3, 6 above
+		// the root) — 9 distinct degrees, which can never fit inside one 8-note scale, so at
+		// least one is guaranteed to be left over as a passing note.
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+				{ s: 1, f: 1 }, // F, b2 — the outlier
+				{ s: 1, f: 2 }, // F#, 2
+				{ s: 1, f: 4 }, // G#, 3
+				{ s: 1, f: 9 }, // C#, 6
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe("E Bebop Dominant (Mode 5) (+b2)");
+
+		const passingNote = model.notes.find((n) => n.string === 1 && n.fret === 1);
+		expect(passingNote?.ghost).toBe(true);
+		expect(passingNote?.className).toContain("fretboard-note--passing");
+
+		// The other added notes (2, 3, 6) aren't outliers under this best-fit scale, so
+		// they shouldn't be auto-ghosted.
+		const nonOutlier = model.notes.find((n) => n.string === 1 && n.fret === 2);
+		expect(nonOutlier?.ghost).toBe(false);
+		expect(nonOutlier?.className ?? "").not.toContain("fretboard-note--passing");
+	});
+
+	it("a manually-ghosted note that's also flagged as a passing note still just shows ghost: true", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+				{ s: 1, f: 1, ghost: true }, // F, b2 — manually ghosted AND the algorithm's outlier
+				{ s: 1, f: 2 },
+				{ s: 1, f: 4 },
+				{ s: 1, f: 9 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		const note = model.notes.find((n) => n.string === 1 && n.fret === 1);
+		expect(note?.ghost).toBe(true);
+		expect(note?.className).toContain("fretboard-note--ghost");
+		expect(note?.className).toContain("fretboard-note--passing");
+	});
+
+	it("passing-note flagging never applies to a virtual note (no shape is drawn for it anyway)", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+				{ s: 1, f: 1, virtual: true }, // F, b2 — the outlier degree, but virtual
+				{ s: 1, f: 2 },
+				{ s: 1, f: 4 },
+				{ s: 1, f: 9 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		const note = model.notes.find((n) => n.string === 1 && n.fret === 1);
+		expect(note?.virtual).toBe(true);
+		expect(note?.ghost).toBe(false);
+	});
+});
+
+describe("resolveFretboardModel — scaleAnalyze (ranked top-5 scale candidates)", () => {
+	it("stacks the top 5 candidates as separate lines, ranked, when scaleAnalyze is on", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		// E minor pentatonic (open 6-2) plus a natural 2nd on string 1 — same degree set as
+		// the ranking example in scales.test.ts: Dorian/Aeolian fully cover it (0 outliers,
+		// tied at the top), Minor Pentatonic/Suspended Pentatonic each leave one outlier and
+		// trail, tied with Bebop Dominant (Mode 2) (a superset with more unplayed notes).
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			scaleAnalyze: true,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+				{ s: 1, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe(
+			[
+				"1. E Dorian",
+				"2. E Aeolian (Natural Minor)",
+				"3. E Minor Pentatonic (+2)",
+				"4. E Suspended Pentatonic (Mode 2) (+m3)",
+				"5. E Bebop Dominant (Mode 2)",
+			].join("\n")
+		);
+	});
+
+	it("scaleAnalyze is ignored under chord naming mode", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			namingMode: "chord",
+			scaleAnalyze: true,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.title).not.toContain("\n");
+	});
+
+	it("scaleAnalyze off (default) still produces the single best-fit title", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe("E Minor Pentatonic");
+	});
+});
+
+describe("resolveFretboardModel — titleIsChordTypography", () => {
+	it("is true only for an auto-generated chord title", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.titleIsChordTypography).toBe(true);
+	});
+
+	it("is false for an auto-generated scale title, even though it's auto-generated", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.titleIsAutoGenerated).toBe(true);
+		expect(model.titleIsChordTypography).toBe(false);
+	});
+
+	it("is false for a user-supplied custom title under chord mode", () => {
+		const config: FretboardBlockConfig = {
+			title: "My Chord",
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.titleIsAutoGenerated).toBe(false);
+		expect(model.titleIsChordTypography).toBe(false);
 	});
 });

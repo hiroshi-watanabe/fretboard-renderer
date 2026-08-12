@@ -43,7 +43,7 @@ Give a `startFret` (or use an open string) for a real, fixed-position chord name
 ![A movable pentatonic scale-box pattern, with a dashed box outline and connecting paths between the notes](images/relative-scale-box.png)
 
 ### Name a chord or a scale
-By default the auto-generated title names a chord/arpeggio (e.g. `Am7add11`) — the same notes read as a scale would be called something else (e.g. minor pentatonic). Switch **Naming mode** to `scale` (Settings, `fretboard-renderer.yaml`, or `namingMode: scale` on one diagram) and, whenever the notes exactly match a known scale, the title names the scale instead (e.g. `A Minor Pentatonic`, or `□ Minor Pentatonic` for a movable pattern). See [Naming mode](#naming-mode-chord-vs-scale) in the reference for the full scale list.
+By default the auto-generated title names a chord/arpeggio (e.g. `Am7add11`) — the same notes read as a scale would be called something else (e.g. minor pentatonic). Switch **Naming mode** to `scale` (Settings, `fretboard-renderer.yaml`, or `namingMode: scale` on one diagram) and the title always names the best-fitting scale instead (e.g. `A Minor Pentatonic`, or `□ Minor Pentatonic` for a movable pattern) — handy for reverse-engineering a copied phrase/solo against its backing chord's root. Any note that doesn't fit the matched scale is called out as a passing note, e.g. `A Minor Pentatonic (+2)`, and ghosted on the diagram. See [Naming mode](#naming-mode-chord-vs-scale) in the reference for the full scale list and how the best fit is chosen.
 
 ### Accurate chord names: sus, add, tensions, slash chords
 The auto-generated title infers real chord theory, not just root + basic quality: `sus2`/`sus4`/power chords when there's no 3rd, `add9`/`add11` when there's no 7th, folded dominant tensions (`C9`, `C11`, `C13`) vs. parenthesized ones on `maj7`/`m7` (`Cmaj7(9)`), `6`/`6/9`, and a `/bass` suffix when the lowest-sounding note isn't the root (`Cmaj7/E`, or `□m7/bVII` in relative mode). Switch the notation itself — pop **Standard**, **Berklee**, or **Jazz** (Real Book) — with **Chord symbol style** (Settings, `fretboard-renderer.yaml`, or `chordSymbolStyle` on one diagram). See [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) for the full rules.
@@ -232,22 +232,38 @@ This calculation can't distinguish tensions beyond one octave — e.g. a 9th loo
 
 ### Naming mode (chord vs. scale)
 
-The same set of notes can be read two ways: as a chord/arpeggio (e.g. `Am7add11`) or, if you're thinking of it as a scale pattern, by its scale name (e.g. minor pentatonic) instead. **Naming mode** controls which one the auto-generated title uses:
+The same set of notes can be read two ways: as a chord/arpeggio (e.g. `Am7add11`), or — useful when you've copied a played phrase/solo onto the diagram and marked its backing chord's root — as the scale it most likely came from. **Naming mode** controls which one the auto-generated title uses:
 
 - **`chord`** (default): names the chord/arpeggio, same as before.
-- **`scale`**: if the present degrees exactly match one of the scales below, names the scale instead (e.g. `A Minor Pentatonic`, or `□ Minor Pentatonic` in relative mode). Otherwise — a partial match doesn't unambiguously identify one scale — it falls back to `chord` naming.
+- **`scale`**: reverse-engineers the best-fitting scale for the notes present, even when they don't exactly match one — it always commits to its best guess rather than falling back to a chord name. Notes outside the matched scale are reported as passing notes in parentheses, e.g. `A Minor Pentatonic (+2)` (or `□ Minor Pentatonic (+2)` in relative mode; no suffix at all on an exact match), and rendered ghosted on the diagram — same look as a manually-marked `ghost: true` note — so they're easy to spot at a glance.
 
 Set it in Settings, in `fretboard-renderer.yaml` for the whole vault, or per diagram with `namingMode: scale`.
 
-Currently covers standard Western scales only (traditional Japanese scales and others aren't included yet):
+**How the best fit is chosen:** for each scale below, its score is +1 for each of its own notes that's present in the input, -1 for each that's missing, and **-1 for each present note it *doesn't* contain** (an outlier/passing-note candidate). The highest-scoring scale wins, ties favor the smaller/simpler one. Penalizing outliers matters: without it, a scale that leaves one note unexplained (e.g. minor pentatonic + a stray 2nd, reported as `(+2)`) could tie with — and by the size tie-break, beat — a scale that explains that same note as one of its own (e.g. Dorian, which contains that 2nd), even though the latter is clearly the tighter fit. With the penalty, Dorian wins outright. This still guarantees an exact match always wins outright — nothing can score higher, since any bigger superset loses points for its own unplayed notes and any smaller subset loses points for the notes it leaves as outliers.
+
+- **`scaleAnalyze: true`** (local-only, off by default): instead of just the #1 pick, stacks the **top 5** ranked candidates as separate title lines (`1. E Dorian`, `2. E Aeolian (Natural Minor)`, ...) — useful for comparing close calls rather than committing to a single guess.
+
+Covers standard Western scale families plus the Japanese Hirajoshi and Ryukyu pentatonic families, each expanded to *every* rotation/mode, not just the traditionally-named ones — since the root here is always the one you assign, the same collection of notes read from a different root is a different row in this table:
 
 | Category | Scales |
 | :--- | :--- |
-| Pentatonic | Major Pentatonic, Minor Pentatonic |
-| Diatonic modes | Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian |
-| Harmonic minor | Harmonic Minor, Phrygian Dominant |
-| Melodic minor | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2) |
-| Other | Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major |
+| Pentatonic (5 rotations) | Major Pentatonic, Minor Pentatonic, Suspended Pentatonic (Mode 2), Phrygian Pentatonic (Mode 3), Mixolydian Pentatonic (Mode 4) |
+| Dominant Pentatonic (5 rotations) | Dominant Pentatonic (Modes 1–5) |
+| Japanese pentatonic — Hirajoshi family (5 rotations) | Hirajoshi, Iwato (Hirajoshi Mode 2), Hon-Kumoi-joshi (Hirajoshi Mode 3), In Sen / Kumoi / Miyakobushi (Hirajoshi Mode 4), Lydian Pentatonic / Chinese (Hirajoshi Mode 5) |
+| Japanese pentatonic — Ryukyu family (5 rotations) | Ryukyu, Ryukyu (Mode 2), Ryukyu (Mode 3), Hindu Pentatonic (Ryukyu Mode 4), Ryukyu (Mode 5) |
+| Diatonic modes (7 rotations) | Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian |
+| Melodic minor (7 rotations) | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2), Dorian b2, Lydian Augmented, Mixolydian b6 |
+| Harmonic minor (7 rotations) | Harmonic Minor, Phrygian Dominant, Locrian ♮6, Ionian #5, Dorian #4, Lydian #2, Ultralocrian (Altered Diminished) |
+| Harmonic Major (7 rotations) | Harmonic Major (Modes 1–7) |
+| Double Harmonic Major (7 rotations) | Double Harmonic Major (Modes 1–7) — aka Byzantine/Arabic/Gypsy Major scale |
+| Neapolitan Major (7 rotations) | Neapolitan Major (Modes 1–7) |
+| Symmetrical | Whole Tone (only 1 unique rotation), Augmented (2), Diminished Whole-Half / Half-Whole (2) |
+| Bebop (8 rotations each) | Bebop Dominant (Modes 1–8), Bebop Major (Modes 1–8) |
+| Other | Blues, Major Blues |
+
+For the newer families above (Harmonic Major, Double Harmonic Major, Neapolitan Major, Dominant Pentatonic), only the well-attested parent-scale name is used — derived-mode nicknames vary too much across sources to assert confidently, so modes 2+ are labeled generically (`Harmonic Major (Mode 2)`, etc.) rather than risk a wrong nickname. "In Sen" (陰音階) turned out to share its exact note collection with an existing Hirajoshi rotation, so it's folded into that row's name instead of listed separately.
+
+Other traditional Japanese scales (miyako-bushi, inaka-bushi, ritsu, min'yo, ...) aren't included yet.
 
 ### Chord symbol style & advanced inference
 
