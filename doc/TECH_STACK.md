@@ -22,22 +22,25 @@ This document describes the toolchain and libraries used to build and test the F
   - Config: `esbuild.config.mjs`. Output format `cjs`, target `es2018`, `obsidian`/`electron`/CodeMirror packages and Node builtins are marked `external` (provided by the Obsidian host at runtime, not bundled).
   - `npm run dev` — watch mode (inline sourcemaps, unminified).
   - `npm run build` — runs `tsc -noEmit` for type-checking first, then a minified production build (no sourcemap).
-- **builtin-modules** `^3.3.0` — supplies the list of Node.js builtin module names to exclude from the bundle.
+- Node's built-in `node:module` `builtinModules` export supplies the list of Node.js builtin module names to exclude from the bundle (no external package needed for this).
 - **tslib** `2.6.2` — runtime helpers TypeScript emits for some down-level syntax; kept small by esbuild's tree-shaking.
 
 ## Runtime dependencies (inside Obsidian)
 
-The plugin has **no npm runtime dependencies** — everything shipped in `main.js` is either our own code or `tslib` helpers. Two things worth calling out:
+The plugin has **no npm runtime dependencies** — everything shipped in `main.js` is either our own code or `tslib` helpers.
 
 - **YAML parsing**: uses Obsidian's own `parseYaml` (imported from the `obsidian` package, which Obsidian's module loader resolves internally at runtime — the `obsidian` npm package itself ships only TypeScript type declarations, no implementation). We do not bundle a YAML library.
-- **`js-yaml`** `^4.1.0` is a devDependency only, used exclusively in `tests/mocks/obsidian.ts` to stand in for Obsidian's `parseYaml` when running unit tests outside the Obsidian app (see Testing below). It is not part of the shipped plugin.
 
 ## Testing
 
 - **[Vitest](https://vitest.dev/)** `^1.4.0` — unit test runner (`npm test` / `npm run test:watch`), configured in `vitest.config.ts`.
   - Runs in a plain Node environment (no DOM/jsdom), since the tested modules (`parser/`, `music/`, `model/`) are pure functions with no DOM dependency. The SVG renderer (`src/render/`) is intentionally not unit-tested this way — it's exercised manually by running the plugin inside Obsidian.
-  - The `obsidian` import is aliased (`resolve.alias`) to `tests/mocks/obsidian.ts`, a minimal stand-in that implements `parseYaml` via `js-yaml`, since the real `obsidian` package has no runtime implementation outside the app.
+  - The `obsidian` import is aliased (`resolve.alias`) to `tests/mocks/obsidian.ts`, a minimal stand-in that implements `parseYaml` via the **`yaml`** package (`^2.4.1`, devDependency only — not part of the shipped plugin), since the real `obsidian` package has no runtime implementation outside the app.
 - Test files live in `tests/`, one file per source module (`parser.test.ts`, `notes.test.ts`, `intervals.test.ts`, `model.test.ts`, `vault-config.test.ts`).
+
+## Release automation
+
+- `.github/workflows/release.yml` — on any tag push, installs dependencies, runs the test suite, builds a production `main.js`, generates a [build provenance attestation](https://github.com/actions/attest-build-provenance) for `main.js`/`manifest.json`/`styles.css` (so users can cryptographically verify the release assets were built from this repository, not tampered with), and creates the GitHub Release with those three files attached.
 
 ## Source layout
 

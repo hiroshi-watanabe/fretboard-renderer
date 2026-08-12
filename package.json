@@ -1,6 +1,6 @@
 {
 	"name": "fretboard-renderer",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced code blocks.",
 	"main": "main.js",
 	"type": "module",
@@ -14,16 +14,14 @@
 	"author": "Hiroshi Watanabe",
 	"license": "MIT",
 	"devDependencies": {
-		"@types/js-yaml": "^4.0.9",
 		"@types/node": "^20.11.30",
 		"@typescript-eslint/eslint-plugin": "^7.4.0",
 		"@typescript-eslint/parser": "^7.4.0",
-		"builtin-modules": "^3.3.0",
 		"esbuild": "^0.20.2",
-		"js-yaml": "^4.1.0",
 		"obsidian": "latest",
 		"tslib": "2.6.2",
 		"typescript": "^5.4.3",
-		"vitest": "^1.4.0"
+		"vitest": "^1.4.0",
+		"yaml": "^2.4.1"
 	}
 }

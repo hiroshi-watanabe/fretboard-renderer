@@ -33,7 +33,7 @@ const KNOWN_KEYS: ReadonlySet<string> = new Set([
 function str(obj: Record<string, unknown>, key: string): string | undefined {
 	if (obj[key] === undefined) return undefined;
 	if (typeof obj[key] !== "string") throw new Error(`"${key}" must be a string.`);
-	return obj[key] as string;
+	return obj[key];
 }
 
 function enumStr(obj: Record<string, unknown>, key: string, allowed: ReadonlySet<string>): string | undefined {
@@ -45,10 +45,10 @@ function enumStr(obj: Record<string, unknown>, key: string, allowed: ReadonlySet
 
 function positiveInt(obj: Record<string, unknown>, key: string): number | undefined {
 	if (obj[key] === undefined) return undefined;
-	if (typeof obj[key] !== "number" || !Number.isInteger(obj[key]) || (obj[key] as number) <= 0) {
+	if (typeof obj[key] !== "number" || !Number.isInteger(obj[key]) || obj[key] <= 0) {
 		throw new Error(`"${key}" must be a positive integer.`);
 	}
-	return obj[key] as number;
+	return obj[key];
 }
 
 /**
@@ -60,7 +60,7 @@ function positiveInt(obj: Record<string, unknown>, key: string): number | undefi
  * applied and simply did nothing, which is far harder to debug.
  */
 export function parseVaultConfig(source: string): Partial<FretboardPluginSettings> {
-	const raw = parseYaml(source);
+	const raw: unknown = parseYaml(source);
 	if (raw === null || raw === undefined) return {};
 	if (typeof raw !== "object" || Array.isArray(raw)) {
 		throw new Error("The Global config file must be a YAML mapping (key: value pairs).");

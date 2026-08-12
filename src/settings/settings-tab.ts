@@ -1,5 +1,10 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab, Setting, type SettingDefinitionGroup } from "obsidian";
+import type { FretboardPluginSettings } from "../types";
 import type FretboardRendererPlugin from "../main";
+
+type SettingKey = keyof FretboardPluginSettings;
+
+const positiveNumber = (v: number): string | undefined => (v > 0 ? undefined : "Must be a positive number.");
 
 export class FretboardSettingTab extends PluginSettingTab {
 	plugin: FretboardRendererPlugin;
@@ -9,6 +14,187 @@ export class FretboardSettingTab extends PluginSettingTab {
 		this.plugin = plugin;
 	}
 
+	/**
+	 * Declarative settings API (Obsidian 1.13.0+) — makes these settings appear in
+	 * the app's global settings search. `getControlValue`/`setControlValue` aren't
+	 * overridden here because `PluginSettingTab`'s defaults already read/write
+	 * `this.plugin.settings` for a plugin's conventional settings storage.
+	 * `display()` below is kept as a fallback for Obsidian versions older than
+	 * 1.13.0, which don't call this method at all.
+	 */
+	getSettingDefinitions(): SettingDefinitionGroup<SettingKey>[] {
+		return [
+			{
+				type: "group",
+				heading: "Layout & dimensions",
+				items: [
+					{
+						name: "Orientation",
+						desc: "Direction the fretboard is drawn in.",
+						control: {
+							type: "dropdown",
+							key: "orientation",
+							defaultValue: "horizontal",
+							options: { horizontal: "Horizontal", vertical: "Vertical" },
+						},
+					},
+					{
+						name: "Strings",
+						desc: "Default number of strings.",
+						control: { type: "number", key: "strings", defaultValue: 6, min: 1, validate: positiveNumber },
+					},
+					{
+						name: "Fret count",
+						desc: "Default number of frets to draw when a block does not specify one.",
+						control: {
+							type: "number",
+							key: "fretCount",
+							defaultValue: 4,
+							min: 1,
+							validate: positiveNumber,
+						},
+					},
+					{
+						name: "String spacing (px)",
+						control: {
+							type: "number",
+							key: "stringSpacing",
+							defaultValue: 30,
+							min: 1,
+							validate: positiveNumber,
+						},
+					},
+					{
+						name: "Fret spacing (px)",
+						control: {
+							type: "number",
+							key: "fretSpacing",
+							defaultValue: 50,
+							min: 1,
+							validate: positiveNumber,
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Display & style",
+				items: [
+					{
+						name: "Label mode",
+						desc: "What to print inside each note dot by default.",
+						control: {
+							type: "dropdown",
+							key: "labelMode",
+							defaultValue: "interval",
+							options: { interval: "Interval (degree)", note: "Note name", none: "None" },
+						},
+					},
+					{
+						name: "Accidental",
+						desc: "Preferred spelling for note-name labels.",
+						control: {
+							type: "dropdown",
+							key: "accidental",
+							defaultValue: "sharp",
+							options: { sharp: "Sharp (#)", flat: "Flat (b)" },
+						},
+					},
+					{
+						name: "Default shape",
+						control: {
+							type: "dropdown",
+							key: "defaultShape",
+							defaultValue: "circle",
+							options: { circle: "Circle", square: "Square", triangle: "Triangle" },
+						},
+					},
+					{
+						name: "Fill style",
+						control: {
+							type: "dropdown",
+							key: "fillStyle",
+							defaultValue: "filled",
+							options: {
+								filled: "Filled (dark dot, light text)",
+								outlined: "Outlined (light dot, dark text)",
+							},
+						},
+					},
+					{
+						name: "Nut style",
+						desc: "How the fret-0 line is drawn.",
+						control: {
+							type: "dropdown",
+							key: "nutStyle",
+							defaultValue: "thick",
+							options: { thick: "Thick line", double: "Double line" },
+						},
+					},
+					{
+						name: "Fret numbering",
+						desc: '"Inlay markers" shows only the standard fretboard inlay positions (3, 5, 7, 9, 12, 15, ...).',
+						control: {
+							type: "dropdown",
+							key: "fretNumbering",
+							defaultValue: "dotted",
+							options: {
+								all: "Show all",
+								dotted: "Only fretted frets",
+								inlay: "Inlay markers only",
+								none: "Hide",
+							},
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Note appearance",
+				items: [
+					{
+						name: "Note size (px)",
+						desc: "Base radius of each note dot. Per-note `sizeAdjust` (-5..5) nudges from this.",
+						control: { type: "number", key: "noteSize", defaultValue: 10, min: 1, validate: positiveNumber },
+					},
+					{
+						name: "Label font size (px)",
+						desc: "Base font size for note labels. Per-note `labelSizeAdjust` (-5..5) nudges from this.",
+						control: {
+							type: "number",
+							key: "labelFontSize",
+							defaultValue: 10,
+							min: 1,
+							validate: positiveNumber,
+						},
+					},
+				],
+			},
+			{
+				type: "group",
+				heading: "Tuning & fallback",
+				items: [
+					{
+						name: "Default tuning",
+						desc: "Comma separated absolute pitches, lowest string first (e.g. E,A,D,G,B,E).",
+						control: { type: "text", key: "defaultTuning", defaultValue: "E,A,D,G,B,E" },
+					},
+					{
+						name: "Omitted string behavior",
+						desc: "How to render strings that are not mentioned in a block's notes.",
+						control: {
+							type: "dropdown",
+							key: "omittedStringBehavior",
+							defaultValue: "open",
+							options: { open: "Treat as open (0)", muted: "Treat as muted (x)", none: "Draw nothing" },
+						},
+					},
+				],
+			},
+		];
+	}
+
+	/** @deprecated Fallback for Obsidian < 1.13.0; see getSettingDefinitions(). */
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();

@@ -175,7 +175,7 @@ function parseSingleDiagram(raw: unknown, prefix: string): FretboardBlockConfig 
 
 function normalizeNote(raw: unknown, index: number, base: string): NoteEntry {
 	if (Array.isArray(raw)) {
-		const [s, f, label, shape, finger] = raw;
+		const [s, f, label, shape, finger] = raw as unknown[];
 		return buildNote({ s, f, label, shape, finger }, index, base);
 	}
 	if (typeof raw === "object" && raw !== null) {
