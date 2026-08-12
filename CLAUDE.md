@@ -27,9 +27,9 @@ Obsidianのプラグイン設定画面から、以下の項目をデフォルト
 *   **Label Mode:** `interval` (度数/デフォルト) / `note` (音名) / `none`。`note`は絶対モード（4.1節: `startFret`指定、または明示的な開放弦を含む）の時だけ音名を自動表示する。相対/移動モードでは実際の音がポジションに依存し確定しないため、`note`モードでも自動ラベルは表示しない（度数は形が決まれば常に一意なので`interval`モードはこの制約を受けない）。
 *   **Accidental:** `sharp` (#) / `flat` (b)
 *   **Default Shape:** `circle` (〇/デフォルト) / `square` (□) / `triangle` (△)
-*   **Fill Style:** `filled` (黒塗り・文字白/デフォルト) / `outlined` (白抜き・文字黒)
+*   **Fill Style:** `filled` (黒塗り・文字白) / `outlined` (白抜き・文字黒/デフォルト)
 *   **Nut Style:** `thick` (太線/デフォルト) / `double` (二重線)。ナット（0フレット位置）の線の描画スタイル。
-*   **Fret Numbering:** `all` (全て表示) / `dotted` (ドットが配置されているフレットのみ表示/デフォルト) / `inlay` (指板インレイの位置のみ表示。3, 5, 7, 9, 12, 15, 17, 19, 21, 24, ... という標準的なギターのポジションマーク位置。音の有無に関わらず常にこの位置を表示する) / `none` (非表示)
+*   **Fret Numbering:** `all` (全て表示) / `dotted` (ドットが配置されているフレットのみ表示) / `inlay` (指板インレイの位置のみ表示。3, 5, 7, 9, 12, 15, 17, 19, 21, 24, ... という標準的なギターのポジションマーク位置。音の有無に関わらず常にこの位置を表示する/デフォルト) / `none` (非表示)
 
 #### [Tuning & Fallback]
 *   **Default Tuning:** `E,A,D,G,B,E` (カンマ区切り、低音弦から高音弦の順。絶対ピッチ基準)
@@ -100,7 +100,7 @@ notes:
 ### 3.2 任意項目 (Optional)
 *   **`title` (String):** グラフ上部に表示。省略時は算出された度数からコード名を自動生成（4.1節参照）。自動生成されたコード名がテンション表記（9th/11th/13th等）を正しく表せない場合は、ここで明示的に上書きできる（例: `title: Cmaj9`）。
 *   **`startFret` (Number):** 描画領域の左端となるフレット番号。有無で描画モードが切り替わる（4.1節参照）。
-*   **`frets` (Number):** 描画するフレット幅。
+*   **`frets` (Number):** 描画するフレット幅。省略時はSystem/Globalの`Fret Count`が使われるが、それだけでは押弦している最も高いフレットの音がグリッドからはみ出す場合は、その音が収まる幅まで自動的に拡張すること（弦の本数を`notes`の最大値に合わせて自動拡張するのと同じ考え方）。`frets`を明示指定した場合はユーザーの意図を優先し、自動拡張しない。
 *   **`orientation` (String):** `horizontal` / `vertical`。System/Globalの向きをこの図だけ上書きする。
 *   **`size` (Number):** この図だけの表示倍率。System/Globalの `stringSpacing`/`fretSpacing`（`fretSpacingAdjust`/`stringSpacingAdjust`適用後の値）に乗算される（例: `0.6` で60%サイズ）。複数の図を小さく並べたい場合に使う。
 *   **`fretSpacingAdjust` / `stringSpacingAdjust` (Number, 整数 -5〜5):** System/Globalの `fretSpacing`/`stringSpacing`（ピクセル）に対する微調整量。ユーザーはプラグインのCSSファイルを直接編集する想定ではないため、ピクセル単位の細かい見た目調整はこのYAMLオプションで行う。`size`より先に加算され、その後`size`が乗算される。

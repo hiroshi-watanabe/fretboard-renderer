@@ -104,9 +104,9 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Label mode | `interval`（度数） / `note`（音名） / `none` | `interval` |
 | Accidental | `sharp`（#） / `flat`（b） | `sharp` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
-| Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `filled` |
+| Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `outlined` |
 | Nut style | `thick`（太線） / `double`（二重線） | `thick` |
-| Fret numbering | `all` / `dotted`（音がある列のみ） / `inlay`（指板インレイ位置のみ: 3,5,7,9,12,15,17,19,21,24,...） / `none` | `dotted` |
+| Fret numbering | `all` / `dotted`（音がある列のみ） / `inlay`（指板インレイ位置のみ: 3,5,7,9,12,15,17,19,21,24,...） / `none` | `inlay` |
 | Default tuning | 低音弦から高音弦の順、カンマ区切り | `E,A,D,G,B,E` |
 | Omitted string behavior | `open`（f:0扱い） / `muted`（f:x扱い） / `none`（描画しない） | `open` |
 | Note size (px) | 音のドット（形）の基準半径。個々のノートの`sizeAdjust`（-5〜5）がここに加算される | `10` |
@@ -186,7 +186,7 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 | :--- | :--- | :--- |
 | `title` | String | 上部に表示するタイトル。省略時は自動生成（下記参照） |
 | `startFret` | Number | 描画領域の左端フレット番号。省略すると相対モードになる（下記参照） |
-| `frets` | Number | 描画するフレット幅（Systemの`Fret count`をこの図だけ上書き） |
+| `frets` | Number | 描画するフレット幅（Systemの`Fret count`をこの図だけ上書き）。省略時は、押弦音がグリッドからはみ出さないよう`Fret count`より自動的に広がる。明示指定した場合は自動拡張されない |
 | `orientation` | `horizontal` / `vertical` | この図だけ向きを上書き |
 | `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う |
 | `fretSpacingAdjust` | 整数 -5〜5 | フレット間隔（px）への微調整。`size`より先に加算される |

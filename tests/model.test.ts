@@ -17,6 +17,34 @@ describe("resolveFretboardModel", () => {
 		expect(model.startFret).toBe(5);
 	});
 
+	it("auto-expands fretsWidth so a fretted note is never clipped past the default width (the README quick-start example)", () => {
+		// No `frets` given: settings.fretCount defaults to 4, but this shape reaches fret 5.
+		const config: FretboardBlockConfig = {
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+				{ s: 4, f: 5 },
+				{ s: 3, f: 2 },
+				{ s: 2, f: 0 },
+				{ s: 1, f: 0 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.fretsWidth).toBeGreaterThanOrEqual(5);
+	});
+
+	it("does not shrink fretsWidth below the System/Global default when notes fit comfortably", () => {
+		const config: FretboardBlockConfig = { startFret: 0, notes: [{ s: 6, f: 1 }] };
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.fretsWidth).toBe(DEFAULT_SETTINGS.fretCount);
+	});
+
+	it("respects an explicit `frets` even if it is narrower than the highest fretted note", () => {
+		const config: FretboardBlockConfig = { startFret: 0, frets: 2, notes: [{ s: 6, f: 5 }] };
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.fretsWidth).toBe(2);
+	});
+
 	it("uses absolute mode and the given startFret when present", () => {
 		const config: FretboardBlockConfig = { startFret: 5, notes: [{ s: 6, f: 5 }] };
 		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);

@@ -89,7 +89,14 @@ export function resolveFretboardModel(
 			: 1
 		: (config.startFret ?? 0);
 
-	const fretsWidth = config.frets ?? settings.fretCount;
+	// Auto-expand the grid (like `stringsTotal` above) so a fretted note is never drawn
+	// past the last visible column when the user hasn't explicitly sized the grid —
+	// e.g. an open Em shape reaching fret 5 shouldn't be clipped by the default
+	// 4-fret width just because `frets` wasn't specified.
+	const gridStartFretForSizing = Math.max(startFret, 1);
+	const maxFrettedNote = frettedValues.length > 0 ? Math.max(...frettedValues) : gridStartFretForSizing;
+	const minRequiredWidth = Math.max(maxFrettedNote - gridStartFretForSizing + 1, 1);
+	const fretsWidth = config.frets ?? Math.max(settings.fretCount, minRequiredWidth);
 
 	// Fill in notes for strings the YAML omits entirely, per the omitted-string setting.
 	const allNotes: NoteEntry[] = [...config.notes];

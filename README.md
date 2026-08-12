@@ -104,9 +104,9 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Label mode | `interval` (degree) / `note` (note name) / `none` | `interval` |
 | Accidental | `sharp` (#) / `flat` (b) | `sharp` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
-| Fill style | `filled` / `outlined` | `filled` |
+| Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
-| Fret numbering | `all` / `dotted` (only fretted columns) / `inlay` (standard inlay positions: 3,5,7,9,12,15,17,19,21,24,...) / `none` | `dotted` |
+| Fret numbering | `all` / `dotted` (only fretted columns) / `inlay` (standard inlay positions: 3,5,7,9,12,15,17,19,21,24,...) / `none` | `inlay` |
 | Default tuning | Comma separated, lowest string first | `E,A,D,G,B,E` |
 | Omitted string behavior | `open` (treat as f:0) / `muted` (treat as f:x) / `none` (draw nothing) | `open` |
 | Note size (px) | Base radius of each note dot; a note's `sizeAdjust` (-5..5) is added to this | `10` |
@@ -186,7 +186,7 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 | :--- | :--- | :--- |
 | `title` | String | Title printed above the diagram. Auto-generated if omitted (see below) |
 | `startFret` | Number | Leftmost fret number of the grid. Omitting it switches to relative mode (see below) |
-| `frets` | Number | Fret width to draw (overrides System `Fret count` for this diagram only) |
+| `frets` | Number | Fret width to draw (overrides System `Fret count` for this diagram only). If omitted, the grid auto-expands past `Fret count` when needed so no fretted note is clipped — an explicit value is never auto-expanded |
 | `orientation` | `horizontal` / `vertical` | Overrides orientation for this diagram only |
 | `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
 | `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |

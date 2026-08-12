@@ -114,7 +114,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 						control: {
 							type: "dropdown",
 							key: "fillStyle",
-							defaultValue: "filled",
+							defaultValue: "outlined",
 							options: {
 								filled: "Filled (dark dot, light text)",
 								outlined: "Outlined (light dot, dark text)",
@@ -137,7 +137,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 						control: {
 							type: "dropdown",
 							key: "fretNumbering",
-							defaultValue: "dotted",
+							defaultValue: "inlay",
 							options: {
 								all: "Show all",
 								dotted: "Only fretted frets",
