@@ -45,6 +45,9 @@ Give a `startFret` (or use an open string) for a real, fixed-position chord name
 ### Name a chord or a scale
 By default the auto-generated title names a chord/arpeggio (e.g. `Am7add11`) — the same notes read as a scale would be called something else (e.g. minor pentatonic). Switch **Naming mode** to `scale` (Settings, `fretboard-renderer.yaml`, or `namingMode: scale` on one diagram) and, whenever the notes exactly match a known scale, the title names the scale instead (e.g. `A Minor Pentatonic`, or `□ Minor Pentatonic` for a movable pattern). See [Naming mode](#naming-mode-chord-vs-scale) in the reference for the full scale list.
 
+### Accurate chord names: sus, add, tensions, slash chords
+The auto-generated title infers real chord theory, not just root + basic quality: `sus2`/`sus4`/power chords when there's no 3rd, `add9`/`add11` when there's no 7th, folded dominant tensions (`C9`, `C11`, `C13`) vs. parenthesized ones on `maj7`/`m7` (`Cmaj7(9)`), `6`/`6/9`, and a `/bass` suffix when the lowest-sounding note isn't the root (`Cmaj7/E`, or `□m7/bVII` in relative mode). Switch the notation itself — pop **Standard**, **Berklee**, or **Jazz** (Real Book) — with **Chord symbol style** (Settings, `fretboard-renderer.yaml`, or `chordSymbolStyle` on one diagram). See [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) for the full rules.
+
 ### Multiple diagrams side by side
 Use `diagrams:` to lay out several charts in one block — handy for a progression like Cmaj7 → Dm7 → G7 — without fighting Obsidian's block layout:
 
@@ -107,6 +110,7 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Label mode | `interval` (degree) / `note` (note name) / `none` | `interval` |
 | Accidental | `sharp` (#) / `flat` (b) | `sharp` |
 | Naming mode | `chord` (name a chord) / `scale` (name a scale, see [below](#naming-mode-chord-vs-scale)) | `chord` |
+| Chord symbol style | `standard` / `berklee` / `jazz`, see [below](#chord-symbol-style--advanced-inference) | `standard` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
 | Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
@@ -195,6 +199,7 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 | `frets` | Number | Fret width to draw (overrides System `Fret count` for this diagram only). If omitted, the grid auto-expands past `Fret count` when needed so no fretted note is clipped — an explicit value is never auto-expanded |
 | `orientation` | `horizontal` / `vertical` | Overrides orientation for this diagram only |
 | `namingMode` | `chord` / `scale` | Overrides [Naming mode](#naming-mode-chord-vs-scale) for this diagram's auto-generated title only |
+| `chordSymbolStyle` | `standard` / `berklee` / `jazz` | Overrides [Chord symbol style](#chord-symbol-style--advanced-inference) for this diagram's auto-generated title only |
 | `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
 | `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |
 | `stringSpacingAdjust` | Integer -5..5 | Pixel nudge to string spacing, applied before `size` |
@@ -236,6 +241,31 @@ Currently covers standard Western scales only (traditional Japanese scales and o
 | Harmonic minor | Harmonic Minor, Phrygian Dominant |
 | Melodic minor | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2) |
 | Other | Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major |
+
+### Chord symbol style & advanced inference
+
+Beyond root + basic quality, the auto-generated title works out real chord theory from the notes present:
+
+- **No 3rd:** `sus4` (a 4th is present), `sus2` (a 2nd is present), or a power chord `5` (neither).
+- **No 7th:** extra notes become `add9` / `add11`.
+- **7th present, dominant (major 3rd + m7):** a 9th folds the whole chord into `C9` (or `C11`/`C13` if an 11th/13th is present too). An 11th or 13th *without* a 9th can't fold in this way, so it's parenthesized onto `7` instead: `C7(11)`, `C7(13)`.
+- **7th present, `maj7` or `m7`:** the base quality always stays intact, with the highest tension parenthesized on top, e.g. `Cmaj7(9)`, `Cm7(11)` (bare, no parens, in Jazz style: `CΔ79`, `C-711`).
+- **`b5`:** always appended as its own parenthesized/bare extra, e.g. `C9(b5)`, `Cm7(9, b5)` (`C9b5` in Jazz style).
+- **6th chords:** `6` (a 6th, no 7th), or `6/9` if a 2nd is present too — never parenthesized.
+- **Slash chords:** when the lowest-sounding note isn't the root, it's appended after `/` — an absolute note name in absolute mode (`Cmaj7/E`), or a Roman-numeral degree in relative mode, where no real pitch is known (`□m7/bVII`).
+
+**Chord symbol style** controls the notation itself, independently of the rules above:
+
+| | Standard (pop) | Berklee | Jazz (Real Book) |
+| :--- | :--- | :--- | :--- |
+| Minor | `Cm7` | `C-7` | `C-7` |
+| Half-diminished | `Cm7(b5)` | `C-7(b5)` | `Cø7` |
+| Diminished 7th | `Cdim7` | `Cdim7` | `C°7` |
+| Augmented | `Caug` | `C+` | `C+` |
+| Major 7th | `Cmaj7` | `Cmaj7` | `CΔ7` |
+| Added tension | `Cmaj7(9)` | `Cmaj7(9)` | `CΔ79` (no parens) |
+
+Set it in Settings, in `fretboard-renderer.yaml` for the whole vault, or per diagram with `chordSymbolStyle: jazz`.
 
 ### Multiple diagrams side by side (`diagrams`)
 

@@ -45,6 +45,9 @@ notes:
 ### コードとして名付けるか、スケールとして名付けるか
 デフォルトでは自動生成されるタイトルはコード／アルペジオとして命名されます（例: `Am7add11`）。同じ音をスケールとして読めば別の名前（マイナーペンタトニック等）になります。**Naming mode**を`scale`に切り替えると（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`namingMode: scale`）、音の構成が既知のスケールと完全一致する場合にスケール名がタイトルになります（例: `A Minor Pentatonic`、ムーバブルなパターンなら`□ Minor Pentatonic`）。スケールの全リストはリファレンスの[Naming mode](#naming-modeコード名スケール名の自動生成切り替え)を参照してください。
 
+### 正確なコード名: sus・add・テンション・分数コード
+自動生成タイトルは、ルート音と基本クオリティだけでなく実際のコード理論に基づいて推定します: 3度が無いときは`sus2`/`sus4`/パワーコード、7度が無いときは`add9`/`add11`、ドミナント7thでテンションが`7`を置き換える折りたたみ表記（`C9`, `C11`, `C13`）と`maj7`/`m7`にカッコで追加するテンション表記（`Cmaj7(9)`）の使い分け、`6`/`6/9`、そして最低音がルートでない場合の`/ベース音`表記（`Cmaj7/E`、相対モードなら`□m7/bVII`）まで対応します。表記の流儀そのものは、ポップス標準の**Standard**・理論重視の**Berklee**・Real Book形式の**Jazz**の3種類から**Chord symbol style**（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`chordSymbolStyle`）で切り替えられます。詳しいルールは[Chord symbol style（コード表記スタイル）と高度なコード名推定](#chord-symbol-styleコード表記スタイルと高度なコード名推定)を参照してください。
+
 ### 複数の図を横に並べる
 `diagrams:`を使うと、Cmaj7 → Dm7 → G7のようなコード進行を、Obsidianのブロックレイアウトに邪魔されずに1つのブロック内で横並びにできます:
 
@@ -107,6 +110,7 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Label mode | `interval`（度数） / `note`（音名） / `none` | `interval` |
 | Accidental | `sharp`（#） / `flat`（b） | `sharp` |
 | Naming mode | `chord`（コード名を自動生成） / `scale`（既知のスケールと完全一致した場合にスケール名を自動生成、[下記参照](#naming-modeコード名スケール名の自動生成切り替え)） | `chord` |
+| Chord symbol style | `standard` / `berklee` / `jazz`、[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | `standard` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
 | Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `outlined` |
 | Nut style | `thick`（太線） / `double`（二重線） | `thick` |
@@ -195,6 +199,7 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 | `frets` | Number | 描画するフレット幅（Systemの`Fret count`をこの図だけ上書き）。省略時は、押弦音がグリッドからはみ出さないよう`Fret count`より自動的に広がる。明示指定した場合は自動拡張されない |
 | `orientation` | `horizontal` / `vertical` | この図だけ向きを上書き |
 | `namingMode` | `chord` / `scale` | この図の自動生成タイトルだけ[Naming mode](#naming-modeコード名スケール名の自動生成切り替え)を上書き |
+| `chordSymbolStyle` | `standard` / `berklee` / `jazz` | この図の自動生成タイトルだけ[Chord symbol style](#chord-symbol-styleコード表記スタイルと高度なコード名推定)を上書き |
 | `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う |
 | `fretSpacingAdjust` | 整数 -5〜5 | フレット間隔（px）への微調整。`size`より先に加算される |
 | `stringSpacingAdjust` | 整数 -5〜5 | 弦間隔（px）への微調整。`size`より先に加算される |
@@ -234,6 +239,31 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 | ハーモニックマイナー系 | Harmonic Minor, Phrygian Dominant |
 | メロディックマイナー系 | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2) |
 | その他 | Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major |
+
+### Chord symbol style（コード表記スタイル）と高度なコード名推定
+
+自動生成タイトルは、ルート音と基本クオリティだけでなく、構成音から実際のコード理論に基づいた表記を組み立てます:
+
+- **3度が無い場合:** 4度があれば`sus4`、2度があれば`sus2`、どちらも無ければパワーコードの`5`。
+- **7度が無い場合:** 追加された音は`add9` / `add11`として付加音扱いになる。
+- **7度があり、ドミナント（長3度+短7度）の場合:** 9度が含まれている場合のみ、最も高いテンション（9度/11度/13度）で`7`を上書きし`C9`/`C11`/`C13`とまとめる。9度が無いまま11度・13度だけが単独で追加されている場合はまとめず、`7`を残したままカッコで付与する（`C7(11)`, `C7(13)`）。
+- **7度があり、`maj7`または`m7`の場合:** 下位テンションの有無に関わらず基本の四和音（`Cmaj7`, `Cm7`）は常に維持し、最も高いテンションをカッコで括って付与する（例: `Cmaj7(9)`, `Cm7(11)`。jazzスタイルではカッコなしで連結: `CΔ79`, `C-711`）。
+- **b5:** 常に独立した装飾として末尾に追加される（例: `C9(b5)`, `Cm7(9, b5)`。jazzスタイルでは`C9b5`）。
+- **6thコード:** 6度があり7度が無ければ`6`、さらに2度もあれば`6/9`（このケースは常にカッコなし）。
+- **分数コード:** 実際に鳴っている最も低い音がルートでない場合、`/`に続けてベース音を付与する。絶対モードでは絶対音名（例: `Cmaj7/E`）、相対モードでは実際のピッチが確定しないため、ルートを「I」としたローマ数字の度数表記になる（例: `□m7/bVII`）。
+
+**Chord symbol style**は、上記のルールとは独立に表記の流儀を切り替えます:
+
+| | Standard（Pop標準） | Berklee | Jazz（Real Book形式） |
+| :--- | :--- | :--- | :--- |
+| マイナー | `Cm7` | `C-7` | `C-7` |
+| ハーフディミニッシュ | `Cm7(b5)` | `C-7(b5)` | `Cø7` |
+| ディミニッシュ7th | `Cdim7` | `Cdim7` | `C°7` |
+| オーギュメント | `Caug` | `C+` | `C+` |
+| メジャー7th | `Cmaj7` | `Cmaj7` | `CΔ7` |
+| テンション追加 | `Cmaj7(9)` | `Cmaj7(9)` | `CΔ79`（カッコなし） |
+
+設定画面、Vault共通の`fretboard-renderer.yaml`、またはブロックごとに`chordSymbolStyle: jazz`のように指定して切り替えられます。
 
 ### 複数の図を横に並べる（`diagrams`）
 

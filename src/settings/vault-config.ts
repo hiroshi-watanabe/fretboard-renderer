@@ -13,6 +13,7 @@ const NUT_STYLES = new Set(["thick", "double"]);
 const FRET_NUMBERINGS = new Set(["all", "dotted", "inlay", "none"]);
 const OMITTED_BEHAVIORS = new Set(["open", "muted", "none"]);
 const NAMING_MODES = new Set(["chord", "scale"]);
+const CHORD_SYMBOL_STYLES = new Set(["standard", "berklee", "jazz"]);
 const KNOWN_KEYS: ReadonlySet<string> = new Set([
 	"orientation",
 	"strings",
@@ -30,6 +31,7 @@ const KNOWN_KEYS: ReadonlySet<string> = new Set([
 	"noteSize",
 	"labelFontSize",
 	"namingMode",
+	"chordSymbolStyle",
 ]);
 
 function str(obj: Record<string, unknown>, key: string): string | undefined {
@@ -108,6 +110,10 @@ export function parseVaultConfig(source: string): Partial<FretboardPluginSetting
 	if (labelFontSize) result.labelFontSize = labelFontSize;
 	const namingMode = enumStr(obj, "namingMode", NAMING_MODES);
 	if (namingMode) result.namingMode = namingMode as FretboardPluginSettings["namingMode"];
+	const chordSymbolStyle = enumStr(obj, "chordSymbolStyle", CHORD_SYMBOL_STYLES);
+	if (chordSymbolStyle) {
+		result.chordSymbolStyle = chordSymbolStyle as FretboardPluginSettings["chordSymbolStyle"];
+	}
 
 	return result;
 }

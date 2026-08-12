@@ -111,6 +111,16 @@ export class FretboardSettingTab extends PluginSettingTab {
 						},
 					},
 					{
+						name: "Chord symbol style",
+						desc: 'Notation convention for auto-generated chord suffixes, e.g. minor: "m" / "-" / "-"; major 7th: "maj7" / "maj7" / "Δ7"; half-diminished: "m7b5" / "-7b5" / "ø7".',
+						control: {
+							type: "dropdown",
+							key: "chordSymbolStyle",
+							defaultValue: "standard",
+							options: { standard: "Standard (pop)", berklee: "Berklee", jazz: "Jazz (Real Book)" },
+						},
+					},
+					{
 						name: "Default shape",
 						control: {
 							type: "dropdown",
@@ -327,6 +337,23 @@ export class FretboardSettingTab extends PluginSettingTab {
 					.setValue(settings.namingMode)
 					.onChange(async (value) => {
 						settings.namingMode = value as typeof settings.namingMode;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Chord symbol style")
+			.setDesc(
+				'Notation convention for auto-generated chord suffixes, e.g. minor: "m" / "-" / "-"; major 7th: "maj7" / "maj7" / "Δ7"; half-diminished: "m7b5" / "-7b5" / "ø7".'
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("standard", "Standard (pop)")
+					.addOption("berklee", "Berklee")
+					.addOption("jazz", "Jazz (Real Book)")
+					.setValue(settings.chordSymbolStyle)
+					.onChange(async (value) => {
+						settings.chordSymbolStyle = value as typeof settings.chordSymbolStyle;
 						await this.plugin.saveSettings();
 					})
 			);

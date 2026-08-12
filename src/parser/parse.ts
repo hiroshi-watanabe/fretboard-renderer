@@ -3,6 +3,7 @@ import type {
 	BarreEntry,
 	BoxEntry,
 	BoxStyle,
+	ChordSymbolStyle,
 	FillStyle,
 	FretValue,
 	FretboardBlockConfig,
@@ -21,6 +22,7 @@ const BOX_STYLES: ReadonlySet<string> = new Set(["solid", "dashed"]);
 const ORIENTATIONS: ReadonlySet<string> = new Set(["horizontal", "vertical"]);
 const FILL_STYLES: ReadonlySet<string> = new Set(["filled", "outlined"]);
 const NAMING_MODES: ReadonlySet<string> = new Set(["chord", "scale"]);
+const CHORD_SYMBOL_STYLES: ReadonlySet<string> = new Set(["standard", "berklee", "jazz"]);
 const ADJUST_MIN = -5;
 const ADJUST_MAX = 5;
 
@@ -31,6 +33,7 @@ const BLOCK_KEYS: ReadonlySet<string> = new Set([
 	"frets",
 	"orientation",
 	"namingMode",
+	"chordSymbolStyle",
 	"size",
 	"fretSpacingAdjust",
 	"stringSpacingAdjust",
@@ -160,6 +163,15 @@ function parseSingleDiagram(raw: unknown, prefix: string): FretboardBlockConfig 
 			throw new FretboardParseError(`"${pfx(prefix, "namingMode")}" must be "chord" or "scale".`);
 		}
 		config.namingMode = namingMode as NamingMode;
+	}
+	if (obj.chordSymbolStyle !== undefined) {
+		const chordSymbolStyle = expectString(obj.chordSymbolStyle, pfx(prefix, "chordSymbolStyle"));
+		if (!CHORD_SYMBOL_STYLES.has(chordSymbolStyle)) {
+			throw new FretboardParseError(
+				`"${pfx(prefix, "chordSymbolStyle")}" must be "standard", "berklee", or "jazz".`
+			);
+		}
+		config.chordSymbolStyle = chordSymbolStyle as ChordSymbolStyle;
 	}
 	if (obj.size !== undefined) {
 		config.size = expectPositiveNumber(obj.size, pfx(prefix, "size"));

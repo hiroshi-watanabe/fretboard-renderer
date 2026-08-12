@@ -17,4 +17,5 @@ export const DEFAULT_SETTINGS: FretboardPluginSettings = {
 	noteSize: 10,
 	labelFontSize: 10,
 	namingMode: "chord",
+	chordSymbolStyle: "standard",
 };

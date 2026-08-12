@@ -124,6 +124,17 @@ notes:
 		);
 	});
 
+	it("parses a local chordSymbolStyle override", () => {
+		const config = parseSingle("chordSymbolStyle: jazz\nnotes:\n  - {s: 6, f: 0}");
+		expect(config.chordSymbolStyle).toBe("jazz");
+	});
+
+	it("rejects an invalid chordSymbolStyle", () => {
+		expect(() => parseFretboardBlock("chordSymbolStyle: pop\nnotes:\n  - {s: 6, f: 0}")).toThrow(
+			FretboardParseError
+		);
+	});
+
 	it("rejects a spacing adjust value outside -5..5", () => {
 		expect(() => parseFretboardBlock("fretSpacingAdjust: 6\nnotes:\n  - {s: 6, f: 0}")).toThrow(
 			FretboardParseError

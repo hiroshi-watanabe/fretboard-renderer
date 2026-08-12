@@ -41,4 +41,12 @@ labelMode: note
 	it("rejects an invalid namingMode", () => {
 		expect(() => parseVaultConfig("namingMode: melody")).toThrow();
 	});
+
+	it("parses chordSymbolStyle", () => {
+		expect(parseVaultConfig("chordSymbolStyle: jazz")).toEqual({ chordSymbolStyle: "jazz" });
+	});
+
+	it("rejects an invalid chordSymbolStyle", () => {
+		expect(() => parseVaultConfig("chordSymbolStyle: pop")).toThrow();
+	});
 });
