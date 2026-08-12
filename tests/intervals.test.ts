@@ -181,6 +181,51 @@ describe("inferChordSuffix", () => {
 		});
 	});
 
+	describe("b9 (b2, no disambiguation needed against a natural 9)", () => {
+		it("appends b9 to a dominant 7th", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7", "b2"]))).toBe("7(b9)");
+		});
+
+		it("appends b9 to a sus4 chord instead of silently dropping it", () => {
+			expect(suffix(new Set(["1", "4", "5", "b2"]))).toBe("sus4(b9)");
+		});
+
+		it("appends a bare b9 with no parens in jazz style", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7", "b2"]), "jazz")).toBe("7b9");
+		});
+	});
+
+	describe("#9 (m3 alongside a major 3rd, not a plain minor chord)", () => {
+		it("does not read m3 as #9 unless a major 3rd is also present", () => {
+			expect(suffix(new Set(["1", "m3", "5", "m7"]))).toBe("m7");
+		});
+
+		it("reads m3 as #9 on a dominant 7th when a major 3rd is also present", () => {
+			expect(suffix(new Set(["1", "3", "m3", "5", "m7"]))).toBe("7(#9)");
+		});
+
+		it("combines #9 with b13 (the user's G7(#9, b13) case)", () => {
+			expect(suffix(new Set(["1", "3", "m3", "5", "m7", "m6"]))).toBe("7(#9, b13)");
+		});
+
+		it("still reads m6 as b13 (not silently dropped) when the plain 5th is omitted but a 7th is present", () => {
+			// Guitarists very commonly mute/omit the plain 5th on an altered dominant
+			// voicing while keeping the altered tension — reported as a regression where
+			// this exact shape (no "5" degree at all) came out "G7(#9)", dropping the b13.
+			expect(suffix(new Set(["1", "3", "m3", "m7", "m6"]))).toBe("7(#9, b13)");
+		});
+	});
+
+	describe("#11 (b5 alongside a plain 5th, not the flatted-5th reading)", () => {
+		it("appends #11 to a dominant 7th", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7", "b5"]))).toBe("7(#11)");
+		});
+
+		it("appends #11 to a major 7th chord", () => {
+			expect(suffix(new Set(["1", "3", "5", "M7", "b5"]))).toBe("maj7(#11)");
+		});
+	});
+
 	it("appends a slash bass note when given", () => {
 		expect(suffix(new Set(["1", "3", "5"]), "standard", "E")).toBe("/E");
 	});

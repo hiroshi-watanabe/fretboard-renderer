@@ -109,6 +109,51 @@ describe("resolveFretboardModel", () => {
 		expect(fifth?.label).toBe("5");
 	});
 
+	it("labels the root note R instead of 1 in interval mode (avoids colliding with finger numbers)", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		const root = model.notes.find((n) => n.string === 6);
+		expect(root?.label).toBe("R");
+	});
+
+	it("relabels the diminished-7th note bb7 instead of 6", () => {
+		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 5, f: 3, label: "root" }, // C
+				{ s: 4, f: 1 }, // Eb, m3
+				{ s: 6, f: 2 }, // Gb, b5
+				{ s: 3, f: 2 }, // A, would be "6" but this chord is a dim7 -> "bb7"
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.notes.find((n) => n.string === 3)?.label).toBe("bb7");
+		expect(model.notes.find((n) => n.string === 5)?.label).toBe("R");
+	});
+
+	it("does not drop b13 when the plain 5th is muted but a 7th is present (reported regression)", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 3,
+			notes: [
+				{ s: 6, f: 1, label: "root" },
+				{ s: 5, f: "x" },
+				{ s: 4, f: 1 },
+				{ s: 3, f: 2 },
+				{ s: 2, f: 2 },
+				{ s: 1, f: 4 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.title).toBe("G7(#9, b13)");
+	});
+
 	it("does not compute degrees when no note is marked root", () => {
 		const config: FretboardBlockConfig = {
 			startFret: 0,

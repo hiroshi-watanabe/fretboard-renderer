@@ -48,6 +48,19 @@ export function intervalDelta(rootPitchClass: number, pitchClass: number): numbe
 }
 
 /**
+ * True for a diminished triad or fully-diminished 7th (minor 3rd + flatted 5th, no other
+ * 7th present) — shared between `inferChordSuffix`'s own "dim"/"dim7" naming and
+ * `fretboard-model.ts`'s per-note "bb7" relabel, so the two "is this chord diminished"
+ * checks can't drift apart.
+ */
+export function isDiminishedChord(presentDegrees: ReadonlySet<string>): boolean {
+	const hasMinor3 = presentDegrees.has("m3");
+	const hasFlat5 = presentDegrees.has("b5") && !presentDegrees.has("5");
+	const has7th = presentDegrees.has("m7") || presentDegrees.has("M7");
+	return hasMinor3 && hasFlat5 && !has7th;
+}
+
+/**
  * `inferChordSuffix` embeds these invisible marker characters around spans of its
  * output that the SVG renderer must treat specially — never shown to the user, always
  * stripped before the title is used as plain text (tests, accessibility, etc.) via
@@ -125,9 +138,16 @@ function appendExtras(base: string, extras: string[], style: ChordSymbolStyle): 
  * Infers a chord quality suffix (e.g. "maj7", "m7(9)", "sus4", "dim7") from the set of
  * degree labels present in a voicing. This is a practical heuristic, not a full
  * harmonic analyzer: degrees beyond an octave (9th/11th/13th) are indistinguishable
- * from 2nd/4th/6th since fretboard positions are analyzed within one octave, and only
- * a flatted 5th is supported as an "altered" tension (a #9/b13 etc. would be enharmonic
- * with degrees this system already uses for something else).
+ * from 2nd/4th/6th since fretboard positions are analyzed within one octave.
+ *
+ * Altered tensions (b9, #9, #11, b13) share degree labels with other meanings in this
+ * one-octave system, so each is only read as the altered tension when a plain/natural
+ * counterpart disambiguates it: b9 (the `b2` degree) is unambiguous on its own; #9 (the
+ * `m3` degree) only reads as `#9` when a major 3rd (`3`) is also present — otherwise
+ * it's just the chord's own minor 3rd; #11 (the `b5` degree) only reads as `#11` when a
+ * plain 5th (`5`) is also present — otherwise it's the chord's own flatted 5th; b13 (the
+ * `m6` degree) only reads as `b13` when a plain 5th is also present — otherwise it's an
+ * augmented 5th (see `hasSharp5` below).
  *
  * `style` picks the notation convention for quality markers and how tensions attach —
  * see `ChordSymbolStyle`. `bassName`, when given, is appended as a slash-chord bass
@@ -148,37 +168,62 @@ export function inferChordSuffix(
 	const hasMinor3 = presentDegrees.has("m3");
 	const hasMajor3 = presentDegrees.has("3");
 	const hasFlat5 = presentDegrees.has("b5") && !presentDegrees.has("5");
-	// "#5" is enharmonic with our "m6" degree label (8 semitones) — the only way this
-	// one-octave degree system can represent it, distinct from a 6th chord's "6" (9 semitones).
-	const hasSharp5 = !hasFlat5 && !presentDegrees.has("5") && presentDegrees.has("m6") && !presentDegrees.has("6");
-	// When a plain 5th is also present, "m6" can't be the augmented reading above (that
-	// requires the 5th to be absent) — it's an altered 13th instead, and must be shown,
-	// not silently dropped just because it falls outside the augmented-triad check.
-	const hasFlatThirteen = presentDegrees.has("m6") && presentDegrees.has("5");
 	const hasMinor7 = presentDegrees.has("m7");
 	const hasMajor7 = presentDegrees.has("M7");
 	const has7th = hasMinor7 || hasMajor7;
+	// "#5" is enharmonic with our "m6" degree label (8 semitones) — the only way this
+	// one-octave degree system can represent it, distinct from a 6th chord's "6" (9
+	// semitones). Only reads as the augmented triad's defining #5 when there's no 7th —
+	// once a 7th is present, "augmented" no longer describes the chord's basic quality,
+	// so that same pitch is read as an altered b13 tension instead (below).
+	const hasSharp5 =
+		!hasFlat5 && !presentDegrees.has("5") && presentDegrees.has("m6") && !presentDegrees.has("6") && !has7th;
+	// "m6" reads as an altered b13 tension — rather than the augmented #5 above — whenever
+	// a plain 5th is also present, OR a 7th is present. The 7th check matters because a
+	// guitarist very commonly omits the plain 5th on a 7th-chord voicing while keeping the
+	// altered tension (e.g. G7(#9, b13) fingered without the plain 5th at all) — once
+	// there's a 7th, "augmented" no longer applies as the chord's basic quality, so the
+	// plain 5th being absent is no longer a competing explanation for this pitch.
+	const hasFlatThirteen = presentDegrees.has("m6") && (presentDegrees.has("5") || has7th);
+	// Mirrors hasFlat5/hasFlatThirteen: "b5" only reads as #11 (an added tension on top of
+	// a plain 5th) when that plain 5th is also present — otherwise it's already claimed by
+	// hasFlat5 above. Unlike hasFlatThirteen, this doesn't get a has7th fallback: "b5"
+	// unambiguously already means "this chord's own flatted 5th" whenever no plain 5th is
+	// around, 7th or not — there's no competing "omitted 5th" reading the way "m6" has,
+	// since a flatted 5th replacing the plain 5th is what "b5" means by definition.
+	const hasSharpEleven = presentDegrees.has("b5") && presentDegrees.has("5");
+	// b9 (the "b2" degree) has no natural-degree counterpart to disambiguate against — b2
+	// and 2 are different pitch classes that can coexist without any ambiguity — so it
+	// always reads as an altered 9th when present.
+	const hasFlatNine = presentDegrees.has("b2");
+	// #9 is enharmonic with our "m3" degree label (3 semitones); it only reads as an
+	// altered tension when a major 3rd is also present (the chord's real 3rd) — otherwise
+	// the "m3" note is simply the chord's own minor 3rd, not a tension.
+	const hasSharpNine = presentDegrees.has("m3") && presentDegrees.has("3");
 	const has6 = presentDegrees.has("6");
 	const has2 = presentDegrees.has("2");
 	const has4 = presentDegrees.has("4");
 	// A diminished 7th's "bb7" is also enharmonic with our "6" degree.
 	const hasDiminished7 = has6;
 	const tension = has7th ? topTension(has2, has4, has6) : undefined;
+	const isDim = isDiminishedChord(presentDegrees);
 
 	let suffix: string;
 
-	if (hasMinor3 && hasFlat5 && !has7th && hasDiminished7) {
+	if (isDim && hasDiminished7) {
 		suffix = tokens.diminishedSeventh;
-	} else if (hasMinor3 && hasFlat5 && !has7th) {
+	} else if (isDim) {
 		suffix = "dim";
 	} else if (hasMinor3 && hasFlat5 && hasMinor7 && style === "jazz" && !tension) {
 		// Jazz's half-diminished symbol replaces "m7" + "(b5)" outright; Standard/Berklee
 		// instead fall through to the generic minor-7th branch below, where the b5
 		// naturally becomes part of the parenthesized extras (e.g. "m7(b5)").
 		suffix = "ø7";
-	} else if (hasMinor3) {
+	} else if (hasMinor3 && !hasMajor3) {
 		const extras: string[] = [];
+		if (hasFlatNine) extras.push("b9");
 		if (tension) extras.push(tension);
+		if (hasSharpEleven) extras.push("#11");
 		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 
@@ -188,17 +233,25 @@ export function inferChordSuffix(
 		} else if (hasMinor7) {
 			suffix = appendExtras(`${tokens.minor}7`, extras, style);
 		} else if (has6) {
-			suffix = `${tokens.minor}6${hasFlatThirteen ? raise("b13") : ""}${hasFlat5 ? raise("b5") : ""}`;
+			suffix = `${tokens.minor}6${hasFlatNine ? raise("b9") : ""}${hasSharpEleven ? raise("#11") : ""}${hasFlatThirteen ? raise("b13") : ""}${hasFlat5 ? raise("b5") : ""}`;
 		} else {
 			suffix = tokens.minor;
 			if (has2) suffix += "add9";
 			if (has4) suffix += "add11";
+			if (hasFlatNine) suffix += raise("b9");
+			if (hasSharpEleven) suffix += raise("#11");
 			if (hasFlatThirteen) suffix += raise("b13");
 			if (hasFlat5) suffix += raise("b5");
 		}
 	} else if (hasMajor3) {
+		// hasMinor3 may also be true here (a major 3rd plus a minor 3rd/#9 together, e.g.
+		// an altered dominant) — the major 3rd always wins for quality purposes, and the
+		// m3 is folded into hasSharpNine below instead of naming this a minor chord.
 		const extras: string[] = [];
+		if (hasFlatNine) extras.push("b9");
+		if (hasSharpNine) extras.push("#9");
 		if (tension) extras.push(tension);
+		if (hasSharpEleven) extras.push("#11");
 		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 
@@ -218,29 +271,40 @@ export function inferChordSuffix(
 			if (has2) {
 				const base = has6 ? "13" : has4 ? "11" : "9";
 				const extras3: string[] = [];
+				if (hasFlatNine) extras3.push("b9");
+				if (hasSharpNine) extras3.push("#9");
+				if (hasSharpEleven) extras3.push("#11");
 				if (hasFlatThirteen && !has6) extras3.push("b13");
 				if (hasFlat5) extras3.push("b5");
 				suffix = appendExtras(base, extras3, style);
 			} else {
 				const extras2: string[] = [];
+				if (hasFlatNine) extras2.push("b9");
+				if (hasSharpNine) extras2.push("#9");
 				if (has4) extras2.push("11");
 				if (has6) extras2.push("13");
+				if (hasSharpEleven) extras2.push("#11");
 				if (hasFlatThirteen && !has6) extras2.push("b13");
 				if (hasFlat5) extras2.push("b5");
 				suffix = appendExtras("7", extras2, style);
 			}
 		} else if (has6) {
-			suffix = `${has2 ? "6/9" : "6"}${hasFlatThirteen ? raise("b13") : ""}${hasFlat5 ? raise("b5") : ""}`;
+			suffix = `${has2 ? "6/9" : "6"}${hasFlatNine ? raise("b9") : ""}${hasSharpNine ? raise("#9") : ""}${hasSharpEleven ? raise("#11") : ""}${hasFlatThirteen ? raise("b13") : ""}${hasFlat5 ? raise("b5") : ""}`;
 		} else {
 			suffix = "";
 			if (has2) suffix += "add9";
 			if (has4) suffix += "add11";
+			if (hasFlatNine) suffix += raise("b9");
+			if (hasSharpNine) suffix += raise("#9");
+			if (hasSharpEleven) suffix += raise("#11");
 			if (hasFlatThirteen) suffix += raise("b13");
 			if (hasFlat5) suffix += raise("b5");
 		}
 	} else {
 		const base = has4 ? "sus4" : has2 ? "sus2" : "5";
 		const extras: string[] = [];
+		if (hasFlatNine) extras.push("b9");
+		if (hasSharpEleven) extras.push("#11");
 		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 		suffix = appendExtras(base, extras, style);

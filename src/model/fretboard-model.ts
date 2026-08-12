@@ -20,6 +20,7 @@ import {
 	degreeForDelta,
 	inferChordSuffix,
 	intervalDelta,
+	isDiminishedChord,
 	romanForDelta,
 	stripTitleMarkers,
 } from "../music/intervals";
@@ -156,20 +157,35 @@ export function resolveFretboardModel(
 			? stringPitchClass(openStringPitchClass(tuning, rootEntry.s), rootEntry.f)
 			: undefined;
 
+	// First pass: compute each note's pitch class/interval and populate the complete
+	// degree set. The per-note label (below) needs the *whole chord's* degree set decided
+	// first — e.g. whether to show "bb7" instead of "6" depends on whether the chord as a
+	// whole is diminished — so this can't be folded into a single pass over the notes.
 	const presentDegrees = new Set<string>();
-	const resolvedNotes: ResolvedNote[] = visibleNotes.map((n) => {
+	const noteComputations = visibleNotes.map((n) => {
 		const pitchClass =
 			typeof n.f === "number" ? stringPitchClass(openStringPitchClass(tuning, n.s), n.f) : undefined;
+		const delta =
+			pitchClass !== undefined && rootPitchClass !== undefined
+				? intervalDelta(rootPitchClass, pitchClass)
+				: undefined;
+		if (delta !== undefined) presentDegrees.add(degreeForDelta(delta));
+		return { n, pitchClass, delta };
+	});
+	// "6" (9 semitones from root) is enharmonic with a diminished 7th's "bb7" — once the
+	// chord is known to be diminished, that note reads more usefully as "bb7" than "6".
+	const isDiminished = isDiminishedChord(presentDegrees);
 
+	const resolvedNotes: ResolvedNote[] = noteComputations.map(({ n, pitchClass, delta }) => {
 		let isRoot = false;
 		let autoLabel = "";
 		if (pitchClass !== undefined) {
-			if (rootPitchClass !== undefined) {
-				const delta = intervalDelta(rootPitchClass, pitchClass);
+			if (delta !== undefined) {
 				isRoot = delta === 0;
-				presentDegrees.add(degreeForDelta(delta));
 				if (settings.labelMode === "interval") {
-					autoLabel = degreeForDelta(delta);
+					// "1" doubles as a finger number elsewhere in the diagram, so the root
+					// is spelled out as "R" instead, to avoid reading like a fingering.
+					autoLabel = isRoot ? "R" : isDiminished && delta === 9 ? "bb7" : degreeForDelta(delta);
 				}
 			}
 			// Absolute pitch is only meaningful when the diagram is anchored to a real
