@@ -6,6 +6,7 @@ import type {
 	FillStyle,
 	FretValue,
 	FretboardBlockConfig,
+	NamingMode,
 	NoteEntry,
 	Orientation,
 	PathEntry,
@@ -19,6 +20,7 @@ const SHAPES: ReadonlySet<string> = new Set(["circle", "square", "triangle"]);
 const BOX_STYLES: ReadonlySet<string> = new Set(["solid", "dashed"]);
 const ORIENTATIONS: ReadonlySet<string> = new Set(["horizontal", "vertical"]);
 const FILL_STYLES: ReadonlySet<string> = new Set(["filled", "outlined"]);
+const NAMING_MODES: ReadonlySet<string> = new Set(["chord", "scale"]);
 const ADJUST_MIN = -5;
 const ADJUST_MAX = 5;
 
@@ -28,6 +30,7 @@ const BLOCK_KEYS: ReadonlySet<string> = new Set([
 	"startFret",
 	"frets",
 	"orientation",
+	"namingMode",
 	"size",
 	"fretSpacingAdjust",
 	"stringSpacingAdjust",
@@ -150,6 +153,13 @@ function parseSingleDiagram(raw: unknown, prefix: string): FretboardBlockConfig 
 			throw new FretboardParseError(`"${pfx(prefix, "orientation")}" must be "horizontal" or "vertical".`);
 		}
 		config.orientation = orientation as Orientation;
+	}
+	if (obj.namingMode !== undefined) {
+		const namingMode = expectString(obj.namingMode, pfx(prefix, "namingMode"));
+		if (!NAMING_MODES.has(namingMode)) {
+			throw new FretboardParseError(`"${pfx(prefix, "namingMode")}" must be "chord" or "scale".`);
+		}
+		config.namingMode = namingMode as NamingMode;
 	}
 	if (obj.size !== undefined) {
 		config.size = expectPositiveNumber(obj.size, pfx(prefix, "size"));

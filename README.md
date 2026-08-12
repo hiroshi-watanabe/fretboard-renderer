@@ -42,6 +42,9 @@ Give a `startFret` (or use an open string) for a real, fixed-position chord name
 
 ![A movable pentatonic scale-box pattern, with a dashed box outline and connecting paths between the notes](images/relative-scale-box.png)
 
+### Name a chord or a scale
+By default the auto-generated title names a chord/arpeggio (e.g. `Am7add11`) — the same notes read as a scale would be called something else (e.g. minor pentatonic). Switch **Naming mode** to `scale` (Settings, `fretboard-renderer.yaml`, or `namingMode: scale` on one diagram) and, whenever the notes exactly match a known scale, the title names the scale instead (e.g. `A Minor Pentatonic`, or `□ Minor Pentatonic` for a movable pattern). See [Naming mode](#naming-mode-chord-vs-scale) in the reference for the full scale list.
+
 ### Multiple diagrams side by side
 Use `diagrams:` to lay out several charts in one block — handy for a progression like Cmaj7 → Dm7 → G7 — without fighting Obsidian's block layout:
 
@@ -103,6 +106,7 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Fret spacing | Spacing between frets (px) | `50` |
 | Label mode | `interval` (degree) / `note` (note name) / `none` | `interval` |
 | Accidental | `sharp` (#) / `flat` (b) | `sharp` |
+| Naming mode | `chord` (name a chord) / `scale` (name a scale, see [below](#naming-mode-chord-vs-scale)) | `chord` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
 | Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
@@ -133,20 +137,22 @@ labelMode: note
 
 Write this directly inside each note's ```fretboard code block. It has the highest priority, overriding both System and Global. Only `notes` is required.
 
+When `startFret` is given, fret numbers in `notes`/`boxes`/`paths`/`barre` are relative to position 1 (see [`startFret`](#other-local-options-all-optional) below) — so this exact block plays the same shape starting anywhere on the neck just by changing `startFret`:
+
 ```fretboard
 title: Am Pentatonic (Box 1)
 visible: 1-6
 startFret: 5
 frets: 4
 boxes:
-  - {frets: "5-8", style: dashed}
+  - {frets: "1-4", style: dashed}
 paths:
-  - [[6,5], [6,8], [5,5], [5,7]]
+  - [[6,1], [6,4], [5,1], [5,3]]
 notes:
-  - {s: 6, f: 5, label: root, shape: square}
-  - [6, 8]
-  - {s: 5, f: 5}
-  - {s: 5, f: 7, finger: 3, ghost: true}
+  - {s: 6, f: 1, label: root, shape: square}
+  - [6, 4]
+  - {s: 5, f: 1}
+  - {s: 5, f: 3, finger: 3, ghost: true}
 ```
 
 ##### `notes` (required)
@@ -155,11 +161,11 @@ An array of note placements. Both object form and a positional shorthand array a
 
 ```yaml
 notes:
-  - {s: 6, f: 5, label: root, shape: square, finger: 1, ghost: false, class: "highlight"}
-  - [6, 8]              # [s, f]
-  - [5, 5, "root"]       # [s, f, label]
-  - [5, 7, "3", "square", 3]  # [s, f, label, shape, finger]
-  - {s: 4, f: 7, color: red, fillStyle: outlined, sizeAdjust: -3, labelSizeAdjust: 2}
+  - {s: 6, f: 1, label: root, shape: square, finger: 1, ghost: false, class: "highlight"}
+  - [6, 4]              # [s, f]
+  - [5, 1, "root"]       # [s, f, label]
+  - [5, 3, "3", "square", 3]  # [s, f, label, shape, finger]
+  - {s: 4, f: 3, color: red, fillStyle: outlined, sizeAdjust: -3, labelSizeAdjust: 2}
 ```
 
 | Key | Required | Description |
@@ -185,9 +191,10 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 | Key | Type | Description |
 | :--- | :--- | :--- |
 | `title` | String | Title printed above the diagram. Auto-generated if omitted (see below) |
-| `startFret` | Number | Leftmost fret number of the grid. Omitting it switches to relative mode (see below) |
+| `startFret` | Number | Leftmost fret number of the grid. Omitting it switches to relative mode (see below). When given, every other fret number in the block (`notes`, `boxes`, `paths`, `barre`) is read as relative to position 1 and transposed: `absolute = f + max(startFret, 1) - 1`. `0` (open) and `x` (muted) are never transposed. This is a no-op for `startFret: 0` or `1`, so plain fixed-position chords written with real fret numbers are unaffected |
 | `frets` | Number | Fret width to draw (overrides System `Fret count` for this diagram only). If omitted, the grid auto-expands past `Fret count` when needed so no fretted note is clipped — an explicit value is never auto-expanded |
 | `orientation` | `horizontal` / `vertical` | Overrides orientation for this diagram only |
+| `namingMode` | `chord` / `scale` | Overrides [Naming mode](#naming-mode-chord-vs-scale) for this diagram's auto-generated title only |
 | `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
 | `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |
 | `stringSpacingAdjust` | Integer -5..5 | Pixel nudge to string spacing, applied before `size` |
@@ -203,11 +210,32 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 - **Absolute mode:** `startFret` is given, or — even without it — `notes` contains an explicit open string (`f: 0`), since a shape with an open string can't physically be moved up the neck. Generates a real chord name (e.g. `Cmaj7`), and only draws the nut (thick/double line) when the left edge is truly fret 0.
 - **Relative mode:** `startFret` is omitted and no open string is present. Treated as a movable pattern: the leftmost fret is set automatically to the lowest fretted note (excluding 0 and x), no fret numbers are printed, and a relative chord name is generated (e.g. `□maj7`).
 
+When `startFret` is given explicitly, every other fret number in the block (`notes`, `boxes`, `paths`, `barre`) is read as relative to position 1 and transposed: `absolute = f + max(startFret, 1) - 1`. `0` (open) and `x` (muted) are never transposed. This is a no-op for `startFret: 0` or `1`, so a plain fixed-position chord written with real fret numbers is unaffected — but for anything higher, it means the same `notes` block plays the same shape starting anywhere on the neck just by changing `startFret` (see the [Local](#local-yaml-inside-each-fretboard-block) example above).
+
 ### Interval auto-calculation and root highlighting
 
 Marking any note with `label: root` auto-computes each note's interval degree (`1, b2, 2, m3, 3, 4, b5, 5, m6, 6, m7, M7`) relative to the tuning, and shows it when label mode is `interval`. Notes matching the root's pitch class (including other octaves) are automatically highlighted (different shape and/or color).
 
 This calculation can't distinguish tensions beyond one octave — e.g. a 9th looks the same as a 2nd, an 11th the same as a 4th. To show them correctly, override a note's `label` (e.g. `label: "9"`) or the diagram's `title` (e.g. `title: Cmaj9`) explicitly.
+
+### Naming mode (chord vs. scale)
+
+The same set of notes can be read two ways: as a chord/arpeggio (e.g. `Am7add11`) or, if you're thinking of it as a scale pattern, by its scale name (e.g. minor pentatonic) instead. **Naming mode** controls which one the auto-generated title uses:
+
+- **`chord`** (default): names the chord/arpeggio, same as before.
+- **`scale`**: if the present degrees exactly match one of the scales below, names the scale instead (e.g. `A Minor Pentatonic`, or `□ Minor Pentatonic` in relative mode). Otherwise — a partial match doesn't unambiguously identify one scale — it falls back to `chord` naming.
+
+Set it in Settings, in `fretboard-renderer.yaml` for the whole vault, or per diagram with `namingMode: scale`.
+
+Currently covers standard Western scales only (traditional Japanese scales and others aren't included yet):
+
+| Category | Scales |
+| :--- | :--- |
+| Pentatonic | Major Pentatonic, Minor Pentatonic |
+| Diatonic modes | Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian |
+| Harmonic minor | Harmonic Minor, Phrygian Dominant |
+| Melodic minor | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2) |
+| Other | Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major |
 
 ### Multiple diagrams side by side (`diagrams`)
 

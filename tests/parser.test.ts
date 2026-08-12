@@ -113,6 +113,17 @@ notes:
 		);
 	});
 
+	it("parses a local namingMode override", () => {
+		const config = parseSingle("namingMode: scale\nnotes:\n  - {s: 6, f: 0}");
+		expect(config.namingMode).toBe("scale");
+	});
+
+	it("rejects an invalid namingMode", () => {
+		expect(() => parseFretboardBlock("namingMode: melody\nnotes:\n  - {s: 6, f: 0}")).toThrow(
+			FretboardParseError
+		);
+	});
+
 	it("rejects a spacing adjust value outside -5..5", () => {
 		expect(() => parseFretboardBlock("fretSpacingAdjust: 6\nnotes:\n  - {s: 6, f: 0}")).toThrow(
 			FretboardParseError

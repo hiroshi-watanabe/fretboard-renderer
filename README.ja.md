@@ -42,6 +42,9 @@ notes:
 
 ![点線の枠とドット同士を結ぶ線を使った、ムーバブルなペンタトニックのスケールボックス図](images/relative-scale-box.png)
 
+### コードとして名付けるか、スケールとして名付けるか
+デフォルトでは自動生成されるタイトルはコード／アルペジオとして命名されます（例: `Am7add11`）。同じ音をスケールとして読めば別の名前（マイナーペンタトニック等）になります。**Naming mode**を`scale`に切り替えると（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`namingMode: scale`）、音の構成が既知のスケールと完全一致する場合にスケール名がタイトルになります（例: `A Minor Pentatonic`、ムーバブルなパターンなら`□ Minor Pentatonic`）。スケールの全リストはリファレンスの[Naming mode](#naming-modeコード名スケール名の自動生成切り替え)を参照してください。
+
 ### 複数の図を横に並べる
 `diagrams:`を使うと、Cmaj7 → Dm7 → G7のようなコード進行を、Obsidianのブロックレイアウトに邪魔されずに1つのブロック内で横並びにできます:
 
@@ -103,6 +106,7 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Fret spacing | フレット間隔（px） | `50` |
 | Label mode | `interval`（度数） / `note`（音名） / `none` | `interval` |
 | Accidental | `sharp`（#） / `flat`（b） | `sharp` |
+| Naming mode | `chord`（コード名を自動生成） / `scale`（既知のスケールと完全一致した場合にスケール名を自動生成、[下記参照](#naming-modeコード名スケール名の自動生成切り替え)） | `chord` |
 | Default shape | `circle` / `square` / `triangle` | `circle` |
 | Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `outlined` |
 | Nut style | `thick`（太線） / `double`（二重線） | `thick` |
@@ -133,20 +137,22 @@ labelMode: note
 
 各ノートの```fretboardコードブロックに直接書きます。System・Globalを最終的に上書きする、最も優先度の高い設定です。`notes` だけが必須で、他は全て任意です。
 
+`startFret`を指定すると、`notes`/`boxes`/`paths`/`barre`内のフレット番号は「ポジション1からの相対値」として扱われます（下記の[`startFret`](#そのほかのlocalオプションすべて任意)参照）。そのため、この`notes`ブロックはそのまま、`startFret`の値を変えるだけで指板上のどこでも同じ形を再現できます:
+
 ```fretboard
 title: Am Pentatonic (Box 1)
 visible: 1-6
 startFret: 5
 frets: 4
 boxes:
-  - {frets: "5-8", style: dashed}
+  - {frets: "1-4", style: dashed}
 paths:
-  - [[6,5], [6,8], [5,5], [5,7]]
+  - [[6,1], [6,4], [5,1], [5,3]]
 notes:
-  - {s: 6, f: 5, label: root, shape: square}
-  - [6, 8]
-  - {s: 5, f: 5}
-  - {s: 5, f: 7, finger: 3, ghost: true}
+  - {s: 6, f: 1, label: root, shape: square}
+  - [6, 4]
+  - {s: 5, f: 1}
+  - {s: 5, f: 3, finger: 3, ghost: true}
 ```
 
 ##### `notes`（必須）
@@ -155,11 +161,11 @@ notes:
 
 ```yaml
 notes:
-  - {s: 6, f: 5, label: root, shape: square, finger: 1, ghost: false, class: "highlight"}
-  - [6, 8]              # [s, f]
-  - [5, 5, "root"]       # [s, f, label]
-  - [5, 7, "3", "square", 3]  # [s, f, label, shape, finger]
-  - {s: 4, f: 7, color: red, fillStyle: outlined, sizeAdjust: -3, labelSizeAdjust: 2}
+  - {s: 6, f: 1, label: root, shape: square, finger: 1, ghost: false, class: "highlight"}
+  - [6, 4]              # [s, f]
+  - [5, 1, "root"]       # [s, f, label]
+  - [5, 3, "3", "square", 3]  # [s, f, label, shape, finger]
+  - {s: 4, f: 3, color: red, fillStyle: outlined, sizeAdjust: -3, labelSizeAdjust: 2}
 ```
 
 | キー | 必須 | 説明 |
@@ -185,9 +191,10 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 | キー | 型 | 説明 |
 | :--- | :--- | :--- |
 | `title` | String | 上部に表示するタイトル。省略時は自動生成（下記参照） |
-| `startFret` | Number | 描画領域の左端フレット番号。省略すると相対モードになる（下記参照） |
+| `startFret` | Number | 描画領域の左端フレット番号。省略すると相対モードになる（下記参照）。指定した場合、ブロック内の他のフレット番号（`notes`, `boxes`, `paths`, `barre`）はすべて「ポジション1からの相対値」として解釈され、`absolute = f + max(startFret, 1) - 1`で実際のフレットに変換される。`0`（開放）と`x`（ミュート）は常に変換対象外。`startFret`が`0`または`1`のときは変換が発生しない（オフセット0）ため、実際のフレット番号をそのまま書く通常の絶対指定は影響を受けない |
 | `frets` | Number | 描画するフレット幅（Systemの`Fret count`をこの図だけ上書き）。省略時は、押弦音がグリッドからはみ出さないよう`Fret count`より自動的に広がる。明示指定した場合は自動拡張されない |
 | `orientation` | `horizontal` / `vertical` | この図だけ向きを上書き |
+| `namingMode` | `chord` / `scale` | この図の自動生成タイトルだけ[Naming mode](#naming-modeコード名スケール名の自動生成切り替え)を上書き |
 | `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う |
 | `fretSpacingAdjust` | 整数 -5〜5 | フレット間隔（px）への微調整。`size`より先に加算される |
 | `stringSpacingAdjust` | 整数 -5〜5 | 弦間隔（px）への微調整。`size`より先に加算される |
@@ -208,6 +215,25 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 いずれかの音に `label: root` を指定すると、チューニングを基準に各音の度数（`1, b2, 2, m3, 3, 4, b5, 5, m6, 6, m7, M7`）を自動計算し、ラベルモードが`interval`ならその度数を表示します。ルートと同じ音（オクターブ違いを含む）は自動的に強調表示（形が変わる・色が変わる）されます。
 
 この自動計算は1オクターブ内でしか判定できないため、9th/11th/13thなどのテンションは2nd/4th/b5と区別できません。正確に表示したい場合は、個々の音の`label`（例: `label: "9"`）、または図全体の`title`（例: `title: Cmaj9`）で明示的に上書きしてください。
+
+### Naming mode（コード名／スケール名の自動生成切り替え）
+
+同じ音の集まりでも、コード／アルペジオとして読むか（例: `Am7add11`）、スケールとして読むか（例: マイナーペンタトニック）で名前が変わります。**Naming mode**は自動生成タイトルがどちらを使うかを切り替えます:
+
+- **`chord`**（デフォルト）: 従来通りコード／アルペジオ名を生成します。
+- **`scale`**: 音の構成が下記のいずれかのスケールと完全一致する場合、スケール名を生成します（例: `A Minor Pentatonic`、相対モードなら`□ Minor Pentatonic`）。完全一致しない場合は一意にスケールを特定できない（部分一致は曖昧になるため）ため、`chord`と同じ命名にフォールバックします。
+
+設定画面、Vault共通の`fretboard-renderer.yaml`、またはブロックごとに`namingMode: scale`で切り替えられます。
+
+現時点では西洋音楽の標準的なスケールのみに対応しています（日本の伝統音階などは未対応）:
+
+| カテゴリ | スケール |
+| :--- | :--- |
+| ペンタトニック | Major Pentatonic, Minor Pentatonic |
+| ダイアトニックモード | Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian |
+| ハーモニックマイナー系 | Harmonic Minor, Phrygian Dominant |
+| メロディックマイナー系 | Melodic Minor, Lydian Dominant, Altered (Super Locrian), Half-Diminished (Locrian ♮2) |
+| その他 | Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major |
 
 ### 複数の図を横に並べる（`diagrams`）
 

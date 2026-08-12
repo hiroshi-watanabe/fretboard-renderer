@@ -10,6 +10,8 @@ export type NutStyle = "thick" | "double";
 export type FretNumbering = "all" | "dotted" | "inlay" | "none";
 export type OmittedStringBehavior = "open" | "muted" | "none";
 export type BoxStyle = "solid" | "dashed";
+/** `chord` names a specific chord (e.g. "Cmaj7"); `scale` names a scale pattern (e.g. "C Dorian") when the present degrees exactly match one. */
+export type NamingMode = "chord" | "scale";
 
 /** Plugin-wide default settings, configurable from the settings tab. */
 export interface FretboardPluginSettings {
@@ -31,6 +33,7 @@ export interface FretboardPluginSettings {
 	noteSize: number;
 	/** Base note label font size in px (per-note `labelSizeAdjust` nudges from this). */
 	labelFontSize: number;
+	namingMode: NamingMode;
 }
 
 /** A single fret position: 0 = open, positive = fretted, "x" = muted. */
@@ -85,6 +88,8 @@ export interface FretboardBlockConfig {
 	startFret?: number;
 	frets?: number;
 	orientation?: Orientation;
+	/** Overrides System/Global naming mode for this diagram's auto-generated title only. */
+	namingMode?: NamingMode;
 	/** Multiplies the resolved string/fret spacing for this block only, e.g. 0.6 to shrink it. */
 	size?: number;
 	/** Pixel delta applied to the resolved fretSpacing before `size`, range -5..5. */
@@ -104,6 +109,7 @@ export interface RawFretboardBlockConfig {
 	startFret?: unknown;
 	frets?: unknown;
 	orientation?: unknown;
+	namingMode?: unknown;
 	size?: unknown;
 	fretSpacingAdjust?: unknown;
 	stringSpacingAdjust?: unknown;

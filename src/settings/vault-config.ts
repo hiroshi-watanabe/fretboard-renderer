@@ -12,6 +12,7 @@ const FILL_STYLES = new Set(["filled", "outlined"]);
 const NUT_STYLES = new Set(["thick", "double"]);
 const FRET_NUMBERINGS = new Set(["all", "dotted", "inlay", "none"]);
 const OMITTED_BEHAVIORS = new Set(["open", "muted", "none"]);
+const NAMING_MODES = new Set(["chord", "scale"]);
 const KNOWN_KEYS: ReadonlySet<string> = new Set([
 	"orientation",
 	"strings",
@@ -28,6 +29,7 @@ const KNOWN_KEYS: ReadonlySet<string> = new Set([
 	"omittedStringBehavior",
 	"noteSize",
 	"labelFontSize",
+	"namingMode",
 ]);
 
 function str(obj: Record<string, unknown>, key: string): string | undefined {
@@ -104,6 +106,8 @@ export function parseVaultConfig(source: string): Partial<FretboardPluginSetting
 	if (noteSize) result.noteSize = noteSize;
 	const labelFontSize = positiveInt(obj, "labelFontSize");
 	if (labelFontSize) result.labelFontSize = labelFontSize;
+	const namingMode = enumStr(obj, "namingMode", NAMING_MODES);
+	if (namingMode) result.namingMode = namingMode as FretboardPluginSettings["namingMode"];
 
 	return result;
 }

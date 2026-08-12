@@ -101,6 +101,16 @@ export class FretboardSettingTab extends PluginSettingTab {
 						},
 					},
 					{
+						name: "Naming mode",
+						desc: 'Auto-generated title: name a chord (e.g. "Am7") or, when the notes exactly match a known scale, name the scale instead (e.g. "A Minor Pentatonic").',
+						control: {
+							type: "dropdown",
+							key: "namingMode",
+							defaultValue: "chord",
+							options: { chord: "Chord", scale: "Scale" },
+						},
+					},
+					{
 						name: "Default shape",
 						control: {
 							type: "dropdown",
@@ -301,6 +311,22 @@ export class FretboardSettingTab extends PluginSettingTab {
 					.setValue(settings.accidental)
 					.onChange(async (value) => {
 						settings.accidental = value as typeof settings.accidental;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Naming mode")
+			.setDesc(
+				'Auto-generated title: name a chord (e.g. "Am7") or, when the notes exactly match a known scale, name the scale instead (e.g. "A Minor Pentatonic").'
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("chord", "Chord")
+					.addOption("scale", "Scale")
+					.setValue(settings.namingMode)
+					.onChange(async (value) => {
+						settings.namingMode = value as typeof settings.namingMode;
 						await this.plugin.saveSettings();
 					})
 			);

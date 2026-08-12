@@ -6,6 +6,7 @@ import type {
 	FretValue,
 	FretboardBlockConfig,
 	FretboardPluginSettings,
+	NamingMode,
 	NoteEntry,
 	NutStyle,
 	Orientation,
@@ -15,6 +16,7 @@ import type {
 import { parseRange } from "../parser/range";
 import { parseTuning, pitchClassToName, stringPitchClass } from "../music/notes";
 import { degreeForDelta, inferChordSuffix, intervalDelta } from "../music/intervals";
+import { findScaleName } from "../music/scales";
 
 export interface ResolvedNote {
 	string: number;
@@ -56,9 +58,19 @@ export interface ResolvedModel {
 
 /** Merges a parsed block with plugin-wide defaults into a self-contained render model. */
 export function resolveFretboardModel(
-	config: FretboardBlockConfig,
+	rawConfig: FretboardBlockConfig,
 	settings: FretboardPluginSettings
 ): ResolvedModel {
+	// When `startFret` is explicitly given, every other fret number in the block (notes,
+	// boxes, paths, barre) is written relative to position 1 — the shape's own first
+	// finger position — so the same `notes` block can be reused at any position just by
+	// changing `startFret`. 0 (open) and "x" (muted) are never offset: they're always
+	// literal. This is a no-op for `startFret` 0 or 1 (and whenever `startFret` is
+	// omitted, including when an open string implicitly forces absolute mode), so plain
+	// absolute-position shapes written with real fret numbers are unaffected.
+	const fretOffset = rawConfig.startFret !== undefined ? Math.max(rawConfig.startFret, 1) - 1 : 0;
+	const config = applyFretOffset(rawConfig, fretOffset);
+
 	const tuning = parseTuning(settings.defaultTuning);
 
 	const explicitStrings = new Set(config.notes.map((n) => n.s));
@@ -184,7 +196,8 @@ export function resolveFretboardModel(
 		};
 	});
 
-	const title = config.title ?? autoTitle(rootPitchClass, presentDegrees, isRelative, settings);
+	const namingMode = config.namingMode ?? settings.namingMode;
+	const title = config.title ?? autoTitle(rootPitchClass, presentDegrees, isRelative, settings, namingMode);
 
 	return {
 		orientation: config.orientation ?? settings.orientation,
@@ -207,6 +220,22 @@ export function resolveFretboardModel(
 	};
 }
 
+function applyFretOffset(config: FretboardBlockConfig, offset: number): FretboardBlockConfig {
+	if (offset === 0) return config;
+	const shift = (f: number): number => (f === 0 ? 0 : f + offset);
+
+	return {
+		...config,
+		notes: config.notes.map((n) => ({ ...n, f: typeof n.f === "number" ? shift(n.f) : n.f })),
+		boxes: config.boxes?.map((box) => {
+			const range = parseRange(box.frets, "boxes.frets");
+			return { ...box, frets: `${shift(range.start)}-${shift(range.end)}` };
+		}),
+		paths: config.paths?.map((path) => path.map(([s, f]): [number, number] => [s, shift(f)])),
+		barre: config.barre?.map((b) => ({ ...b, fret: shift(b.fret) })),
+	};
+}
+
 /**
  * Tuning is written low string first (e.g. "E,A,D,G,B,E"), but strings are numbered
  * high string first (string 1 = high e, string 6 = low E), so the mapping is reversed.
@@ -221,9 +250,19 @@ function autoTitle(
 	rootPitchClass: number | undefined,
 	presentDegrees: ReadonlySet<string>,
 	isRelative: boolean,
-	settings: FretboardPluginSettings
+	settings: FretboardPluginSettings,
+	namingMode: NamingMode
 ): string {
 	if (rootPitchClass === undefined) return "";
+
+	// Scale mode only kicks in when the present degrees exactly match a known scale;
+	// otherwise there's no single unambiguous scale name, so fall back to naming the
+	// chord/arpeggio those notes form (the same thing chord mode always does).
+	const scaleName = namingMode === "scale" ? findScaleName(presentDegrees) : undefined;
+	if (scaleName !== undefined) {
+		return isRelative ? `□ ${scaleName}` : `${pitchClassToName(rootPitchClass, settings.accidental)} ${scaleName}`;
+	}
+
 	const suffix = inferChordSuffix(presentDegrees);
 	if (isRelative) {
 		return `□${suffix}`;

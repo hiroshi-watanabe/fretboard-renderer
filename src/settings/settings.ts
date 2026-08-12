@@ -16,4 +16,5 @@ export const DEFAULT_SETTINGS: FretboardPluginSettings = {
 	omittedStringBehavior: "open",
 	noteSize: 10,
 	labelFontSize: 10,
+	namingMode: "chord",
 };

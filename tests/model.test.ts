@@ -320,3 +320,172 @@ describe("resolveFretboardModel", () => {
 		expect(model.notes[0].radius).toBe(3); // (10 - 4) * 0.5
 	});
 });
+
+describe("resolveFretboardModel — startFret fret-offset (relative-to-position-1 numbering)", () => {
+	it("offsets note frets by startFret-1 when startFret > 1, so f:1 lands on the given startFret", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 5,
+			notes: [
+				{ s: 6, f: 1, label: "root" }, // -> absolute fret 5
+				{ s: 6, f: 4 }, // -> absolute fret 8
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		const byString = model.notes.filter((n) => n.string === 6);
+		expect(byString.map((n) => n.fret)).toEqual([5, 8]);
+	});
+
+	it("never offsets open (0) or muted (x) notes, even when startFret > 1", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 5,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: "x" },
+				{ s: 4, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.notes.find((n) => n.string === 6)?.fret).toBe(0);
+		expect(model.notes.find((n) => n.string === 5)?.fret).toBe("x");
+		expect(model.notes.find((n) => n.string === 4)?.fret).toBe(6); // 2 + (5-1)
+	});
+
+	it("offsets boxes.frets, paths, and barre.fret consistently with notes", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 5,
+			notes: [{ s: 6, f: 1, label: "root" }],
+			boxes: [{ frets: "1-4" }],
+			paths: [
+				[
+					[6, 1],
+					[6, 4],
+				],
+			],
+			barre: [{ fret: 1, start: 6, end: 5 }],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.boxes[0].frets).toBe("5-8");
+		expect(model.paths[0]).toEqual([
+			[6, 5],
+			[6, 8],
+		]);
+		expect(model.barre[0].fret).toBe(5);
+	});
+
+	it("does not offset when startFret is 0 (open-position numbers stay literal)", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.notes.find((n) => n.string === 5)?.fret).toBe(2);
+	});
+
+	it("does not offset when startFret is 1 (already position-1-based)", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 1,
+			notes: [{ s: 6, f: 3, label: "root" }],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.notes[0].fret).toBe(3);
+	});
+
+	it("does not offset when startFret is omitted, even if an open string forces absolute mode", () => {
+		const config: FretboardBlockConfig = {
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 2 },
+				{ s: 4, f: 5 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.isRelative).toBe(false); // absolute mode (open string present)
+		expect(model.notes.find((n) => n.string === 5)?.fret).toBe(2);
+		expect(model.notes.find((n) => n.string === 4)?.fret).toBe(5);
+	});
+
+	it("does not offset in relative mode (no startFret, no open string)", () => {
+		const config: FretboardBlockConfig = {
+			notes: [
+				{ s: 6, f: 5, label: "root" },
+				{ s: 5, f: 7 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.isRelative).toBe(true);
+		expect(model.notes.find((n) => n.string === 5)?.fret).toBe(7);
+	});
+});
+
+describe("resolveFretboardModel — naming mode (chord vs scale)", () => {
+	it("defaults to chord naming", () => {
+		expect(DEFAULT_SETTINGS.namingMode).toBe("chord");
+	});
+
+	it("names a chord/arpeggio, unaffected by namingMode, when the degrees don't exactly match a known scale", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			namingMode: "scale",
+			notes: [
+				{ s: 6, f: 0, label: "root" }, // E
+				{ s: 5, f: 2 }, // B, fifth
+				{ s: 4, f: 5 }, // G, minor third
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.title).toBe("Em"); // a plain minor triad isn't a listed scale
+	});
+
+	it("names the scale (absolute) when namingMode is scale and the degrees exactly match a known scale", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const };
+		// All-open E minor pentatonic (E,A,D,G,B open = 1,4,m7,m3,5 relative to E).
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe("E Minor Pentatonic");
+	});
+
+	it("names the scale (relative, □ prefix) when namingMode is scale and no startFret/open string is given", () => {
+		const settings = { ...DEFAULT_SETTINGS, namingMode: "scale" as const, omittedStringBehavior: "none" as const };
+		const config: FretboardBlockConfig = {
+			visible: "2-6",
+			notes: [
+				{ s: 6, f: 5, label: "root" }, // A
+				{ s: 5, f: 3 }, // C, m3
+				{ s: 3, f: 7 }, // D, 4
+				{ s: 4, f: 2 }, // E, 5
+				{ s: 2, f: 8 }, // G, m7
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.isRelative).toBe(true);
+		expect(model.title).toBe("□ Minor Pentatonic");
+	});
+
+	it("a Local namingMode overrides the System/Global default", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			namingMode: "scale",
+			notes: [
+				{ s: 6, f: 0, label: "root" },
+				{ s: 5, f: 0 },
+				{ s: 4, f: 0 },
+				{ s: 3, f: 0 },
+				{ s: 2, f: 0 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS); // System default is "chord"
+		expect(model.title).toBe("E Minor Pentatonic");
+	});
+});

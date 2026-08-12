@@ -33,4 +33,12 @@ labelMode: note
 			labelFontSize: 12,
 		});
 	});
+
+	it("parses namingMode", () => {
+		expect(parseVaultConfig("namingMode: scale")).toEqual({ namingMode: "scale" });
+	});
+
+	it("rejects an invalid namingMode", () => {
+		expect(() => parseVaultConfig("namingMode: melody")).toThrow();
+	});
 });

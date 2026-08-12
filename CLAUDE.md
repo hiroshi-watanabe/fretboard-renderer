@@ -30,6 +30,7 @@ Obsidianのプラグイン設定画面から、以下の項目をデフォルト
 *   **Fill Style:** `filled` (黒塗り・文字白) / `outlined` (白抜き・文字黒/デフォルト)
 *   **Nut Style:** `thick` (太線/デフォルト) / `double` (二重線)。ナット（0フレット位置）の線の描画スタイル。
 *   **Fret Numbering:** `all` (全て表示) / `dotted` (ドットが配置されているフレットのみ表示) / `inlay` (指板インレイの位置のみ表示。3, 5, 7, 9, 12, 15, 17, 19, 21, 24, ... という標準的なギターのポジションマーク位置。音の有無に関わらず常にこの位置を表示する/デフォルト) / `none` (非表示)
+*   **Naming Mode:** `chord` (コード名を自動生成/デフォルト) / `scale` (スケール名を自動生成)。詳細は4.4節参照。
 
 #### [Tuning & Fallback]
 *   **Default Tuning:** `E,A,D,G,B,E` (カンマ区切り、低音弦から高音弦の順。絶対ピッチ基準)
@@ -44,7 +45,7 @@ Obsidianのプラグイン設定画面から、以下の項目をデフォルト
 ### 2.2 Global Settings（Vault共通のYAML設定ファイル）
 Vaultのルートディレクトリに **`fretboard-renderer.yaml`** というファイルを置くことで、そのVault内の全```fretboardブロックに適用されるデフォルト値を、System設定より優先して上書きできます。
 
-*   指定できるキーはSystem設定と全く同じ（2.1節の全項目: orientation, strings, fretCount, stringSpacing, fretSpacing, labelMode, accidental, defaultShape, fillStyle, nutStyle, fretNumbering, defaultTuning, omittedStringBehavior）。
+*   指定できるキーはSystem設定と全く同じ（2.1節の全項目: orientation, strings, fretCount, stringSpacing, fretSpacing, labelMode, accidental, defaultShape, fillStyle, nutStyle, fretNumbering, defaultTuning, omittedStringBehavior, noteSize, labelFontSize, namingMode）。
 *   ファイルが存在しない場合、またはキーが省略されている場合は、Systemの値がそのまま使われる。
 *   ファイルの構文エラーや不正な値がある場合は、プラグインやVault内の描画をクラッシュさせず、Obsidianの通知（Notice）で一度だけエラー内容を表示した上で、System設定にフォールバックして動作を継続すること（個々のブロックにはエラーを出さない。原因がVault共通ファイル側にあるため）。
 *   ファイルを編集して保存すると、次にレンダリングされるブロックから自動的に反映される（プラグインの再起動やリロードは不要）。
@@ -64,20 +65,21 @@ labelMode: note
 **`notes` プロパティのみが必須（Mandatory）であり、他はすべて任意（Optional）です。**
 
 ### 【記述例】
+`startFret: 5`により、`notes`/`boxes`/`paths`内のフレット番号（1〜4）は「ポジション1起点の相対値」として自動的に5〜8フレットへ変換される（3.2節参照）。この`notes`ブロックはそのまま、`startFret`の値を変えるだけで指板上の別の位置に移動できる。
 ```fretboard
 title: Am Pentatonic (Box 1)
 visible: 1-6
 startFret: 5
 frets: 4
 boxes:
-  - {frets: "5-8", style: dashed}
+  - {frets: "1-4", style: dashed}
 paths:
-  - [[6,5], [6,8], [5,5], [5,7]]
+  - [[6,1], [6,4], [5,1], [5,3]]
 notes:
-  - {s: 6, f: 5, label: root, shape: square}
-  - [6, 8] # 配列による省略記法も許容
-  - {s: 5, f: 5}
-  - {s: 5, f: 7, finger: 3, ghost: true}
+  - {s: 6, f: 1, label: root, shape: square}
+  - [6, 4] # 配列による省略記法も許容
+  - {s: 5, f: 1}
+  - {s: 5, f: 3, finger: 3, ghost: true}
 ```
 
 ### 3.1 必須項目 (Mandatory)
@@ -99,9 +101,10 @@ notes:
 
 ### 3.2 任意項目 (Optional)
 *   **`title` (String):** グラフ上部に表示。省略時は算出された度数からコード名を自動生成（4.1節参照）。自動生成されたコード名がテンション表記（9th/11th/13th等）を正しく表せない場合は、ここで明示的に上書きできる（例: `title: Cmaj9`）。
-*   **`startFret` (Number):** 描画領域の左端となるフレット番号。有無で描画モードが切り替わる（4.1節参照）。
+*   **`startFret` (Number):** 描画領域の左端となるフレット番号。有無で描画モードが切り替わる（4.1節参照）。**`startFret`を明示指定した場合、`notes`/`boxes`/`paths`/`barre`内のフレット番号は「1番目のポジションからの相対値」として解釈され、`absolute = f + max(startFret, 1) - 1`で実際のフレットに変換される**（`0`と`x`は常にこの変換の対象外で、常にそのまま開放弦・ミュートとして扱う）。これにより、同じ`notes`ブロックを`startFret`の値だけ変えて使い回せる（例: ペンタトニックのボックスを指板上のどこにでも移動できる）。`startFret`が`0`または`1`のときはオフセットが`0`になるため、実質的に変換は起きず、絶対的なフレット番号をそのまま書く従来通りの挙動になる。
 *   **`frets` (Number):** 描画するフレット幅。省略時はSystem/Globalの`Fret Count`が使われるが、それだけでは押弦している最も高いフレットの音がグリッドからはみ出す場合は、その音が収まる幅まで自動的に拡張すること（弦の本数を`notes`の最大値に合わせて自動拡張するのと同じ考え方）。`frets`を明示指定した場合はユーザーの意図を優先し、自動拡張しない。
 *   **`orientation` (String):** `horizontal` / `vertical`。System/Globalの向きをこの図だけ上書きする。
+*   **`namingMode` (String):** `chord` / `scale`。System/Globalの命名モードをこの図だけ上書きする（4.4節参照）。
 *   **`size` (Number):** この図だけの表示倍率。System/Globalの `stringSpacing`/`fretSpacing`（`fretSpacingAdjust`/`stringSpacingAdjust`適用後の値）に乗算される（例: `0.6` で60%サイズ）。複数の図を小さく並べたい場合に使う。
 *   **`fretSpacingAdjust` / `stringSpacingAdjust` (Number, 整数 -5〜5):** System/Globalの `fretSpacing`/`stringSpacing`（ピクセル）に対する微調整量。ユーザーはプラグインのCSSファイルを直接編集する想定ではないため、ピクセル単位の細かい見た目調整はこのYAMLオプションで行う。`size`より先に加算され、その後`size`が乗算される。
 *   **`visible` (String):** 描画する弦の範囲。例: `"1-4"`。指定された場合、SVGのY軸（縦幅）の計算を動的に変更し、不要な弦は描画しないこと。
@@ -154,6 +157,20 @@ diagrams:
 
 ### 4.3 Default Behaviors (フォールバック)
 `label: root` が一つも存在しない場合は度数の自動算出は行わず、label未指定の音は文字無しの「図形のみ（例: 黒塗り丸 ●）」として描画してください。省略された弦は `Omitted String Behavior` に従って補完してください。
+
+### 4.4 Naming Mode（コード名 / スケール名の自動生成切り替え）
+同じ音の集合でも、「コード（アルペジオ）として見た名前」と「スケールとして見た名前」は異なる（例: ルート・m3・4・5・m7の5音は、コードとしては`m7add11`のように見えるが、スケールとしてはマイナーペンタトニックである）。`Naming Mode`はこの解釈を切り替える設定。
+
+*   **`chord` (デフォルト):** 従来通り、4.2節の度数集合からコード名サフィックス（`inferChordSuffix`相当のロジック）を生成する。
+*   **`scale`:** 4.2節で算出した度数の集合（`presentDegrees`）が、あらかじめ用意されたスケール定義表の**いずれかと完全一致**した場合のみ、そのスケール名を使う（例: `E Minor Pentatonic`、相対モードなら`□ Minor Pentatonic`）。完全一致するスケールが無い場合は`chord`モードと同じロジックにフォールバックする（部分一致でスケール名をあてがおうとしないこと。曖昧になるため）。
+*   スケール名を使う場合のタイトル書式は、ルート名/`□`とスケール名の間に半角スペースを1つ入れる（コード名は詰めて書くが、スケール名は複数単語になるため）。
+*   スケール定義表（初期実装のスコープ。西洋音楽の一般的なスケールのみとし、邦楽音階（都節・田舎節・律・琉球・民謡など）は将来の拡張とする）:
+    *   ペンタトニック: Major Pentatonic, Minor Pentatonic
+    *   教会旋法（メジャースケールの7つのモード）: Ionian (Major), Dorian, Phrygian, Lydian, Mixolydian, Aeolian (Natural Minor), Locrian
+    *   ハーモニックマイナー系: Harmonic Minor, Phrygian Dominant（第5旋法）
+    *   メロディックマイナー系: Melodic Minor, Lydian Dominant（第4旋法）, Altered / Super Locrian（第7旋法）, Half-Diminished / Locrian ♮2（第6旋法）
+    *   その他: Blues, Whole Tone, Diminished (Whole-Half), Diminished (Half-Whole), Bebop Dominant, Bebop Major
+*   このスケール表は拡張しやすいテーブル駆動（度数集合→名前のマッピング）で実装し、将来的に邦楽音階等を追加しやすい設計にすること。
 
 ## 5. Error Handling & Deliverables
 *   **Error Handling (Local):** ```fretboardブロック内のYAMLに構文エラーや不正な値があった場合、プラグインをクラッシュさせず、そのコードブロック内に赤字でエラー内容のテキストを表示して安全に中断してください。
