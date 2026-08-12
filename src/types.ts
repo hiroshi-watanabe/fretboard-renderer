@@ -4,7 +4,8 @@
 export type Orientation = "horizontal" | "vertical";
 export type LabelMode = "interval" | "note" | "none";
 export type Accidental = "sharp" | "flat";
-export type Shape = "circle" | "square" | "triangle";
+/** `none` draws no shape outline at all — just the label text on a borderless filled backdrop (see `drawShape` in `render-fretboard.ts`). */
+export type Shape = "circle" | "square" | "triangle" | "none";
 export type FillStyle = "filled" | "outlined";
 export type NutStyle = "thick" | "double";
 export type FretNumbering = "all" | "dotted" | "inlay" | "none";

@@ -86,6 +86,10 @@
 	fill: var(--interactive-accent);
 }
 
+.fretboard-shape.is-borderless {
+	stroke: none;
+}
+
 .fretboard-label {
 	/* font-size is set per-note via inline style (System `labelFontSize` + per-note adjust). */
 	font-weight: 600;

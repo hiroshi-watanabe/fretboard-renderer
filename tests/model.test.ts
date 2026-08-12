@@ -68,6 +68,34 @@ describe("resolveFretboardModel", () => {
 		expect(byString.get(5)?.isRoot).toBe(false);
 	});
 
+	describe("shape: none", () => {
+		it("resolves a per-note shape: none override regardless of the System default", () => {
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				notes: [{ s: 6, f: 0, shape: "none" }],
+			};
+			const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+			expect(model.notes[0].shape).toBe("none");
+		});
+
+		it("falls back to a System/Global defaultShape of none when a note doesn't specify one", () => {
+			const settings = { ...DEFAULT_SETTINGS, defaultShape: "none" as const };
+			const config: FretboardBlockConfig = { startFret: 0, notes: [{ s: 6, f: 0 }] };
+			const model = resolveFretboardModel(config, settings);
+			expect(model.notes[0].shape).toBe("none");
+		});
+
+		it("does not upgrade a root note to square when defaultShape is none (the circle-only upgrade doesn't apply)", () => {
+			const settings = { ...DEFAULT_SETTINGS, defaultShape: "none" as const };
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				notes: [{ s: 6, f: 0, label: "root" }],
+			};
+			const model = resolveFretboardModel(config, settings);
+			expect(model.notes[0].shape).toBe("none");
+		});
+	});
+
 	it("labels notes with computed degrees in interval mode", () => {
 		const config: FretboardBlockConfig = {
 			startFret: 0,
@@ -201,6 +229,24 @@ describe("resolveFretboardModel", () => {
 		};
 		const model = resolveFretboardModel(config, settings);
 		expect(model.title).toBe("C/E");
+	});
+
+	it("does not drop an altered 13th (m6 with a plain 5th) from a sus4 chord", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 1,
+			frets: 4,
+			barre: [{ fret: 1, start: 6, end: 1 }],
+			notes: [
+				{ s: 6, f: 1 },
+				{ s: 5, f: 3, label: "root" },
+				{ s: 4, f: 3 },
+				{ s: 3, f: 1 },
+				{ s: 2, f: 1 },
+				{ s: 1, f: 3 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.title).toBe("Csus4(b13)/F");
 	});
 
 	it("names a slash chord's bass by Roman-numeral degree in relative mode (no absolute pitch is known)", () => {

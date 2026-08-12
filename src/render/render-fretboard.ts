@@ -356,6 +356,7 @@ function drawShape(
 	const cls = [
 		"fretboard-shape",
 		filled ? "is-filled" : "is-outlined",
+		shape === "none" ? "is-borderless" : "",
 		dashed ? "is-ghost" : "",
 		className ?? "",
 	]
@@ -364,7 +365,16 @@ function drawShape(
 	const attrs: Record<string, string | number> = { class: cls };
 	if (dashed) attrs["stroke-dasharray"] = "3,2";
 	// Inline style (not a presentation attribute) so it wins over the CSS classes above.
-	if (color) attrs.style = filled ? `fill:${color};stroke:${color};` : `stroke:${color};`;
+	// `shape: "none"` always suppresses the stroke via the `is-borderless` CSS class —
+	// a custom `color` only ever tints the fill for a borderless note (there's no
+	// border left to tint), so its stroke half is skipped here.
+	if (color) {
+		if (shape === "none") {
+			if (filled) attrs.style = `fill:${color};`;
+		} else {
+			attrs.style = filled ? `fill:${color};stroke:${color};` : `stroke:${color};`;
+		}
+	}
 
 	switch (shape) {
 		case "square": {
@@ -380,6 +390,8 @@ function drawShape(
 			break;
 		}
 		default:
+			// "none" also lands here — always a borderless circle, never a borderless
+			// square/triangle, so it reads consistently as "just text" everywhere.
 			svgEl("circle", { ...attrs, cx, cy, r }, svg);
 	}
 }

@@ -151,6 +151,10 @@ export function inferChordSuffix(
 	// "#5" is enharmonic with our "m6" degree label (8 semitones) — the only way this
 	// one-octave degree system can represent it, distinct from a 6th chord's "6" (9 semitones).
 	const hasSharp5 = !hasFlat5 && !presentDegrees.has("5") && presentDegrees.has("m6") && !presentDegrees.has("6");
+	// When a plain 5th is also present, "m6" can't be the augmented reading above (that
+	// requires the 5th to be absent) — it's an altered 13th instead, and must be shown,
+	// not silently dropped just because it falls outside the augmented-triad check.
+	const hasFlatThirteen = presentDegrees.has("m6") && presentDegrees.has("5");
 	const hasMinor7 = presentDegrees.has("m7");
 	const hasMajor7 = presentDegrees.has("M7");
 	const has7th = hasMinor7 || hasMajor7;
@@ -175,6 +179,7 @@ export function inferChordSuffix(
 	} else if (hasMinor3) {
 		const extras: string[] = [];
 		if (tension) extras.push(tension);
+		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 
 		if (hasMajor7) {
@@ -183,16 +188,18 @@ export function inferChordSuffix(
 		} else if (hasMinor7) {
 			suffix = appendExtras(`${tokens.minor}7`, extras, style);
 		} else if (has6) {
-			suffix = `${tokens.minor}6${hasFlat5 ? raise("b5") : ""}`;
+			suffix = `${tokens.minor}6${hasFlatThirteen ? raise("b13") : ""}${hasFlat5 ? raise("b5") : ""}`;
 		} else {
 			suffix = tokens.minor;
 			if (has2) suffix += "add9";
 			if (has4) suffix += "add11";
+			if (hasFlatThirteen) suffix += raise("b13");
 			if (hasFlat5) suffix += raise("b5");
 		}
 	} else if (hasMajor3) {
 		const extras: string[] = [];
 		if (tension) extras.push(tension);
+		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 
 		if (hasSharp5 && !has7th) {
@@ -210,28 +217,33 @@ export function inferChordSuffix(
 			// the m7/maj7 branches (e.g. "C7(11)", "C7(13)").
 			if (has2) {
 				const base = has6 ? "13" : has4 ? "11" : "9";
-				suffix = hasFlat5 ? appendExtras(base, ["b5"], style) : base;
+				const extras3: string[] = [];
+				if (hasFlatThirteen && !has6) extras3.push("b13");
+				if (hasFlat5) extras3.push("b5");
+				suffix = appendExtras(base, extras3, style);
 			} else {
 				const extras2: string[] = [];
 				if (has4) extras2.push("11");
 				if (has6) extras2.push("13");
+				if (hasFlatThirteen && !has6) extras2.push("b13");
 				if (hasFlat5) extras2.push("b5");
 				suffix = appendExtras("7", extras2, style);
 			}
 		} else if (has6) {
-			suffix = `${has2 ? "6/9" : "6"}${hasFlat5 ? raise("b5") : ""}`;
+			suffix = `${has2 ? "6/9" : "6"}${hasFlatThirteen ? raise("b13") : ""}${hasFlat5 ? raise("b5") : ""}`;
 		} else {
 			suffix = "";
 			if (has2) suffix += "add9";
 			if (has4) suffix += "add11";
+			if (hasFlatThirteen) suffix += raise("b13");
 			if (hasFlat5) suffix += raise("b5");
 		}
-	} else if (has4) {
-		suffix = "sus4";
-	} else if (has2) {
-		suffix = "sus2";
 	} else {
-		suffix = "5";
+		const base = has4 ? "sus4" : has2 ? "sus2" : "5";
+		const extras: string[] = [];
+		if (hasFlatThirteen) extras.push("b13");
+		if (hasFlat5) extras.push("b5");
+		suffix = appendExtras(base, extras, style);
 	}
 
 	if (bassName) suffix += `${TITLE_NORMAL_START}/${bassName}${TITLE_NORMAL_END}`;

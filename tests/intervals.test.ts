@@ -147,6 +147,40 @@ describe("inferChordSuffix", () => {
 		expect(suffix(new Set(["1", "3", "b5", "m7", "2"]), "jazz")).toBe("9b5");
 	});
 
+	describe("b13 (m6 alongside a plain 5th, not the augmented reading)", () => {
+		it("appends b13 to a sus4 chord instead of silently dropping it", () => {
+			expect(suffix(new Set(["1", "4", "5", "m6"]))).toBe("sus4(b13)");
+		});
+
+		it("appends b13 to a sus2 chord", () => {
+			expect(suffix(new Set(["1", "2", "5", "m6"]))).toBe("sus2(b13)");
+		});
+
+		it("appends b13 to a power chord", () => {
+			expect(suffix(new Set(["1", "5", "m6"]))).toBe("5(b13)");
+		});
+
+		it("appends a bare b13 with no parens in jazz style", () => {
+			expect(suffix(new Set(["1", "4", "5", "m6"]), "jazz")).toBe("sus4b13");
+		});
+
+		it("appends b13 to a minor 7th chord", () => {
+			expect(suffix(new Set(["1", "m3", "5", "m7", "m6"]))).toBe("m7(b13)");
+		});
+
+		it("appends b13 to a major 7th chord", () => {
+			expect(suffix(new Set(["1", "3", "5", "M7", "m6"]))).toBe("maj7(b13)");
+		});
+
+		it("appends b13 to a dominant 7th with no other tension", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7", "m6"]))).toBe("7(b13)");
+		});
+
+		it("appends b13 alongside a folded dominant 9th", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7", "2", "m6"]))).toBe("9(b13)");
+		});
+	});
+
 	it("appends a slash bass note when given", () => {
 		expect(suffix(new Set(["1", "3", "5"]), "standard", "E")).toBe("/E");
 	});

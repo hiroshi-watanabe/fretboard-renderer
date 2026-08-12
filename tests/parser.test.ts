@@ -88,6 +88,11 @@ notes:
 		);
 	});
 
+	it("accepts shape: none (no outline, label-only)", () => {
+		const config = parseSingle("notes:\n  - {s: 6, f: 5, shape: none}");
+		expect(config.notes[0].shape).toBe("none");
+	});
+
 	it("rejects malformed YAML without throwing a raw error", () => {
 		expect(() => parseFretboardBlock("notes: [")).toThrow(FretboardParseError);
 	});

@@ -49,4 +49,8 @@ labelMode: note
 	it("rejects an invalid chordSymbolStyle", () => {
 		expect(() => parseVaultConfig("chordSymbolStyle: pop")).toThrow();
 	});
+
+	it("parses defaultShape: none", () => {
+		expect(parseVaultConfig("defaultShape: none")).toEqual({ defaultShape: "none" });
+	});
 });

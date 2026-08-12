@@ -17,7 +17,7 @@ import type {
 import { FretboardParseError } from "./errors";
 import { parseRange } from "./range";
 
-const SHAPES: ReadonlySet<string> = new Set(["circle", "square", "triangle"]);
+const SHAPES: ReadonlySet<string> = new Set(["circle", "square", "triangle", "none"]);
 const BOX_STYLES: ReadonlySet<string> = new Set(["solid", "dashed"]);
 const ORIENTATIONS: ReadonlySet<string> = new Set(["horizontal", "vertical"]);
 const FILL_STYLES: ReadonlySet<string> = new Set(["filled", "outlined"]);
@@ -255,7 +255,7 @@ function buildNote(
 	if (fields.shape !== undefined) {
 		const shape = expectString(fields.shape, `${noteCtx}.shape`);
 		if (!SHAPES.has(shape)) {
-			throw new FretboardParseError(`${noteCtx}.shape must be one of circle, square, triangle.`);
+			throw new FretboardParseError(`${noteCtx}.shape must be one of circle, square, triangle, none.`);
 		}
 		note.shape = shape as Shape;
 	}

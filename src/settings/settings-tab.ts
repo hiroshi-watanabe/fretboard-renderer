@@ -122,11 +122,12 @@ export class FretboardSettingTab extends PluginSettingTab {
 					},
 					{
 						name: "Default shape",
+						desc: '"None" draws no outline — just the label on a borderless filled backdrop.',
 						control: {
 							type: "dropdown",
 							key: "defaultShape",
 							defaultValue: "circle",
-							options: { circle: "Circle", square: "Square", triangle: "Triangle" },
+							options: { circle: "Circle", square: "Square", triangle: "Triangle", none: "None" },
 						},
 					},
 					{
@@ -360,11 +361,13 @@ export class FretboardSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName("Default shape")
+			.setDesc('"None" draws no outline — just the label on a borderless filled backdrop.')
 			.addDropdown((dropdown) =>
 				dropdown
 					.addOption("circle", "Circle")
 					.addOption("square", "Square")
 					.addOption("triangle", "Triangle")
+					.addOption("none", "None")
 					.setValue(settings.defaultShape)
 					.onChange(async (value) => {
 						settings.defaultShape = value as typeof settings.defaultShape;

@@ -111,7 +111,7 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Accidental | `sharp` (#) / `flat` (b) | `sharp` |
 | Naming mode | `chord` (name a chord) / `scale` (name a scale, see [below](#naming-mode-chord-vs-scale)) | `chord` |
 | Chord symbol style | `standard` / `berklee` / `jazz`, see [below](#chord-symbol-style--advanced-inference) | `standard` |
-| Default shape | `circle` / `square` / `triangle` | `circle` |
+| Default shape | `circle` / `square` / `triangle` / `none` (no outline, label only — see [below](#notes-required)) | `circle` |
 | Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
 | Fret numbering | `all` / `dotted` (only fretted columns) / `inlay` (standard inlay positions: 3,5,7,9,12,15,17,19,21,24,...) / `none` | `inlay` |
@@ -177,7 +177,7 @@ notes:
 | `s` | Yes | String number (1..N, 1 is the highest-pitched string) |
 | `f` | Yes | Fret number. `0` = open, `1`+ = fretted, `x` = muted. **`0` and `x` are not grid columns** — they're always drawn in a special header lane outside the grid, and are never counted as fret-number labels |
 | `label` | – | `root` auto-computes the interval degree. Any other string (e.g. `"maj7"`, `"9"`) is shown verbatim, bypassing auto-calculation |
-| `shape` | – | `circle` / `square` / `triangle` |
+| `shape` | – | `circle` / `square` / `triangle` / `none` — draws no outline, just the label (or finger number, or any value that would otherwise sit inside the shape). Still rendered as a borderless filled circle underneath — with or without a label — so it isn't literally invisible and text doesn't collide with the fret/string line behind it |
 | `finger` | – | Finger number, printed small just outside the dot |
 | `ghost` | – | `true` draws a dashed/translucent outline |
 | `class` | – | Arbitrary CSS class name, for highlighting via a CSS snippet |
@@ -250,7 +250,7 @@ Beyond root + basic quality, the auto-generated title works out real chord theor
 - **No 7th:** extra notes become `add9` / `add11`.
 - **7th present, dominant (major 3rd + m7):** a 9th folds the whole chord into `C9` (or `C11`/`C13` if an 11th/13th is present too). An 11th or 13th *without* a 9th can't fold in this way, so it's parenthesized onto `7` instead: `C7(11)`, `C7(13)`.
 - **7th present, `maj7` or `m7`:** the base quality always stays intact, with the highest tension parenthesized on top, e.g. `Cmaj7(9)`, `Cm7(11)` (bare, no parens, in Jazz style: `CΔ79`, `C-711`).
-- **`b5`:** always appended as its own parenthesized/bare extra, e.g. `C9(b5)`, `Cm7(9, b5)` (`C9b5` in Jazz style).
+- **`b5` / `b13`:** always appended as an independent extra, in every case above — including `sus4`/`sus2`/power chords — never silently dropped. `b5` is a flatted 5th; `b13` is a 6th-degree note when a plain 5th is *also* present (without a 5th, that same note is read as `#5`/augmented instead — see [Interval auto-calculation](#interval-auto-calculation-and-root-highlighting)). E.g. `C9(b5)`, `Cm7(9, b5)`, `Csus4(b13)` (`C9b5`, `Csus4b13` in Jazz style).
 - **6th chords:** `6` (a 6th, no 7th), or `6/9` if a 2nd is present too — never parenthesized.
 - **Slash chords:** when the lowest-sounding note isn't the root, it's appended after `/` — an absolute note name in absolute mode (`Cmaj7/E`), or a Roman-numeral degree in relative mode, where no real pitch is known (`□m7/bVII`).
 
