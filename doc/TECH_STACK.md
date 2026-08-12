@@ -27,9 +27,8 @@ This document describes the toolchain and libraries used to build and test the F
 
 ## Runtime dependencies (inside Obsidian)
 
-The plugin has **no npm runtime dependencies** — everything shipped in `main.js` is either our own code or `tslib` helpers.
-
-- **YAML parsing**: uses Obsidian's own `parseYaml` (imported from the `obsidian` package, which Obsidian's module loader resolves internally at runtime — the `obsidian` npm package itself ships only TypeScript type declarations, no implementation). We do not bundle a YAML library.
+- **[yaml](https://www.npmjs.com/package/yaml)** `^2.4.1` (regular dependency, not dev-only) — used for all YAML parsing (`src/parser/parse.ts`, `src/settings/vault-config.ts`), bundled directly into `main.js` by esbuild. Originally this used Obsidian's own `parseYaml` instead (no runtime deps at all), but that only exists inside Obsidian's module loader — switching to the standalone `yaml` package let the same parsing code run unchanged in the VSCode extension's plain Node.js host too (see "Shared core vs. platform shells" under Source layout, below).
+- Everything else shipped in `main.js` is our own code or `tslib` helpers.
 
 ## Testing
 
@@ -55,17 +54,29 @@ src/
   music/
     notes.ts                 Note name ⇄ pitch class, tuning parsing
     intervals.ts              Interval degree calculation, chord-name suffix inference
+    scales.ts                 SCALES table + best-fit scale-name inference
   model/
     fretboard-model.ts        Merges Local/Global/System into one render-ready model
   render/
-    svg-builder.ts            Low-level SVG element helpers
+    svg-builder.ts            Low-level SVG element helpers: a small VNode tree
+                               (tag/attrs/children) with two serializers — toDom()
+                               for a real Obsidian DOM, toSvgString() for a plain
+                               XML string (no `document`, used by the VSCode extension)
     layout.ts                 Orientation-agnostic grid coordinate mapping
-    render-fretboard.ts       Draws the grid, notes, barre, boxes, paths
+    render-fretboard.ts       buildFretboardSvg() builds the shared VNode tree (grid,
+                               notes, barre, boxes, paths); renderFretboard()/
+                               renderFretboardRow() (Obsidian-only) wrap it in toDom()
   settings/
     settings.ts               Default (System) settings
-    settings-tab.ts           Settings UI
+    settings-tab.ts           Settings UI (Obsidian-only)
     vault-config.ts           Global (vault-wide YAML file) config parsing
 ```
+
+### Shared core vs. platform shells
+
+Everything under `src/` is platform-agnostic and shared verbatim (by relative import, not a package/symlink) with the [`vscode-extension/`](../vscode-extension) folder at the repo root — it is **not** Obsidian-only despite living alongside Obsidian's own `main.ts`/`manifest.json`/`styles.css` at the top level. The only Obsidian-specific code is `src/main.ts` (plugin entry point) and `src/settings/settings-tab.ts` (settings UI) — everything else (`parser/`, `music/`, `model/`, `render/svg-builder.ts`'s `toSvgString()` path, `render/layout.ts`, `settings/vault-config.ts`) has no Obsidian dependency and is exercised by both platforms' test suites/builds. `src/render/render-fretboard.ts` sits in between: `buildFretboardSvg()` is shared, `renderFretboard()`/`renderFretboardRow()` are thin Obsidian-only wrappers around it.
+
+`src/` stays at the repo root — rather than moving into a sibling `core/`/`obsidian/` split — because Obsidian plugins conventionally need `manifest.json`/`main.js`/`styles.css` at the repo root for direct-repo installs (e.g. BRAT); keeping the Obsidian plugin's own layout at root avoids disrupting that, at the cost of the shared code visually reading as "the Obsidian plugin's `src/`" unless you know this note exists. `vscode-extension/` imports it via relative paths (`../../src/...`) and bundles it into its own `dist/extension.js` with esbuild, so nothing outside `vscode-extension/` needs to ship for that side to work standalone.
 
 ## Why these choices
 
