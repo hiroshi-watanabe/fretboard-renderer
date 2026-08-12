@@ -32,11 +32,19 @@ const KNOWN_KEYS: ReadonlySet<string> = new Set([
 	"labelFontSize",
 	"namingMode",
 	"chordSymbolStyle",
+	"omitNotation",
+	"showInversions",
 ]);
 
 function str(obj: Record<string, unknown>, key: string): string | undefined {
 	if (obj[key] === undefined) return undefined;
 	if (typeof obj[key] !== "string") throw new Error(`"${key}" must be a string.`);
+	return obj[key];
+}
+
+function bool(obj: Record<string, unknown>, key: string): boolean | undefined {
+	if (obj[key] === undefined) return undefined;
+	if (typeof obj[key] !== "boolean") throw new Error(`"${key}" must be true or false.`);
 	return obj[key];
 }
 
@@ -114,6 +122,10 @@ export function parseVaultConfig(source: string): Partial<FretboardPluginSetting
 	if (chordSymbolStyle) {
 		result.chordSymbolStyle = chordSymbolStyle as FretboardPluginSettings["chordSymbolStyle"];
 	}
+	const omitNotation = bool(obj, "omitNotation");
+	if (omitNotation !== undefined) result.omitNotation = omitNotation;
+	const showInversions = bool(obj, "showInversions");
+	if (showInversions !== undefined) result.showInversions = showInversions;
 
 	return result;
 }

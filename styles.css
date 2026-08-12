@@ -104,6 +104,11 @@
 	fill: var(--text-normal);
 }
 
+.fretboard-label.is-virtual {
+	fill: var(--text-muted);
+	font-weight: 500;
+}
+
 .fretboard-finger {
 	font-size: 8px;
 	fill: var(--text-muted);

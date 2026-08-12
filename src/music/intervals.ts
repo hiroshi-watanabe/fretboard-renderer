@@ -61,6 +61,22 @@ export function isDiminishedChord(presentDegrees: ReadonlySet<string>): boolean 
 }
 
 /**
+ * The classical triad/seventh-chord "inversion" bass tones — the 3rd, 5th, or 7th. A
+ * bass note landing on one of these degrees is just a different voicing of the *same*
+ * chord tones (1st/2nd/3rd inversion), not new harmonic information, so real-world chord
+ * charts very often skip notating it (see `showInversions`). A bass note on anything else
+ * (a tension, or a pitch genuinely outside the chord) is a "true" slash chord and always
+ * shown — it's information the plain chord symbol can't otherwise convey.
+ */
+const INVERSION_BASS_DEGREES: ReadonlySet<string> = new Set(["3", "m3", "5", "m7", "M7"]);
+
+/** True when `bassDegree` (the bass note's degree relative to the root) is one of the
+ * chord's own 3rd/5th/7th — see `INVERSION_BASS_DEGREES`. */
+export function isInversionBass(bassDegree: string): boolean {
+	return INVERSION_BASS_DEGREES.has(bassDegree);
+}
+
+/**
  * `inferChordSuffix` embeds these invisible marker characters around spans of its
  * output that the SVG renderer must treat specially — never shown to the user, always
  * stripped before the title is used as plain text (tests, accessibility, etc.) via
@@ -135,6 +151,18 @@ function appendExtras(base: string, extras: string[], style: ChordSymbolStyle): 
 }
 
 /**
+ * Appends omit markers ("omit3", "omit5", "omit1") in their own parenthesized, raised
+ * group — unlike `appendExtras`, this always uses parentheses, even in Jazz style. Omit
+ * markers are full English words, not compact tension symbols like "b13"/"#9", so bare
+ * concatenation (Jazz's usual style for extras) would read as an unreadable run-on
+ * (e.g. "C9b5omit5") instead of a clearly separated annotation.
+ */
+function appendOmitMarkers(suffix: string, markers: string[]): string {
+	if (markers.length === 0) return suffix;
+	return suffix + raise(`(${markers.join(", ")})`);
+}
+
+/**
  * Infers a chord quality suffix (e.g. "maj7", "m7(9)", "sus4", "dim7") from the set of
  * degree labels present in a voicing. This is a practical heuristic, not a full
  * harmonic analyzer: degrees beyond an octave (9th/11th/13th) are indistinguishable
@@ -155,13 +183,25 @@ function appendExtras(base: string, extras: string[], style: ChordSymbolStyle): 
  * where no absolute pitch is known); the caller decides when a bass is meaningful (only
  * when it differs from the root).
  *
+ * `omitNotation`, when true, marks chord tones that theory implies but aren't actually
+ * present: `(omit3)` when nothing fills the 3rd's role (no 3rd, no sus2/sus4 substitute —
+ * a plain "5" power chord becomes "(omit3)" outright, since that alone already says "just
+ * root+5"; a 7th present without a 3rd still shows the 7th either way, omitNotation or
+ * not — it's never silently dropped), `(omit5)` when no 5th-family degree is present at
+ * all, and `(omit1)` when `rootOmitted` is true (the root was only supplied by a virtual
+ * reference note, never actually sounding — see `virtual` in `NoteEntry`). Off by
+ * default: omitting the 5th in particular is extremely common on guitar, and marking
+ * every such voicing would be noisy.
+ *
  * The returned string embeds invisible typography markers (see `TITLE_RAISED_START` et
  * al.) — pass it through `stripTitleMarkers` before treating it as plain text.
  */
 export function inferChordSuffix(
 	presentDegrees: ReadonlySet<string>,
 	style: ChordSymbolStyle = "standard",
-	bassName?: string
+	bassName?: string,
+	omitNotation = false,
+	rootOmitted = false
 ): string {
 	const tokens = STYLE_TOKENS[style];
 
@@ -171,6 +211,9 @@ export function inferChordSuffix(
 	const hasMinor7 = presentDegrees.has("m7");
 	const hasMajor7 = presentDegrees.has("M7");
 	const has7th = hasMinor7 || hasMajor7;
+	// No 5th-family degree present at all — not even an altered one. Never true for the
+	// dim/dim7/ø7/augmented branches below, since those all require a b5 or m6 themselves.
+	const hasNoFifthAtAll = !presentDegrees.has("5") && !presentDegrees.has("b5") && !presentDegrees.has("m6");
 	// "#5" is enharmonic with our "m6" degree label (8 semitones) — the only way this
 	// one-octave degree system can represent it, distinct from a 6th chord's "6" (9
 	// semitones). Only reads as the augmented triad's defining #5 when there's no 7th —
@@ -243,6 +286,7 @@ export function inferChordSuffix(
 			if (hasFlatThirteen) suffix += raise("b13");
 			if (hasFlat5) suffix += raise("b5");
 		}
+		suffix = appendOmitMarkers(suffix, omitNotation && hasNoFifthAtAll ? ["omit5"] : []);
 	} else if (hasMajor3) {
 		// hasMinor3 may also be true here (a major 3rd plus a minor 3rd/#9 together, e.g.
 		// an altered dominant) — the major 3rd always wins for quality purposes, and the
@@ -300,16 +344,64 @@ export function inferChordSuffix(
 			if (hasFlatThirteen) suffix += raise("b13");
 			if (hasFlat5) suffix += raise("b5");
 		}
+		// The augmented/dim/dim7/ø7 branches above (and the corresponding branches within
+		// this one, via hasSharp5) inherently already claim the 5th slot (an altered #5 or
+		// b5 IS the chord's 5th), so hasNoFifthAtAll is always false there — omit5 only
+		// ever fires for the branches that leave the 5th slot genuinely empty.
+		suffix = appendOmitMarkers(suffix, omitNotation && hasNoFifthAtAll ? ["omit5"] : []);
 	} else {
-		const base = has4 ? "sus4" : has2 ? "sus2" : "5";
+		// No 3rd present at all. A 7th is never silently dropped, even here, regardless of
+		// omitNotation; a bare power chord's "5" is replaced (not appended-to) by
+		// "(omit3)" when omitNotation is on, since that alone already says "just root+5".
+		let base: string;
+		if (has4) {
+			// sus4's "4" and a natural 9th ("2") occupy different slots (unlike sus2,
+			// where "2" and "9" are the same pitch), so a dominant 7th can fold the
+			// natural 9th/13th in exactly like the dominant branch above — "9sus4" /
+			// "13sus4" are standard, common chord symbols, not add-ons to invent.
+			if (hasMajor7) {
+				base = `${tokens.majorSeventh}sus4`;
+			} else if (hasMinor7) {
+				base = has6 ? "13sus4" : has2 ? "9sus4" : "7sus4";
+			} else {
+				base = "sus4";
+			}
+		} else if (has2) {
+			// sus2 already occupies the "9th" slot, so a 7th is shown bare (no separate
+			// tension-folding attempt) — still never silently dropped, just not folded.
+			if (hasMajor7) {
+				base = `${tokens.majorSeventh}sus2`;
+			} else if (hasMinor7) {
+				base = "7sus2";
+			} else {
+				base = "sus2";
+			}
+		} else if (hasMajor7) {
+			base = tokens.majorSeventh;
+		} else if (hasMinor7) {
+			base = "7";
+		} else if (omitNotation) {
+			base = "";
+		} else {
+			base = "5";
+		}
+
 		const extras: string[] = [];
 		if (hasFlatNine) extras.push("b9");
 		if (hasSharpEleven) extras.push("#11");
 		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 		suffix = appendExtras(base, extras, style);
+
+		const omitMarkers: string[] = [];
+		if (omitNotation && !has4 && !has2) omitMarkers.push("omit3");
+		if (omitNotation && hasNoFifthAtAll) omitMarkers.push("omit5");
+		suffix = appendOmitMarkers(suffix, omitMarkers);
 	}
 
+	// "(omit1)" describes the chord symbol itself, so it belongs before the slash bass —
+	// a slash-chord's bass conventionally always trails at the very end of the symbol.
+	if (omitNotation && rootOmitted) suffix = appendOmitMarkers(suffix, ["omit1"]);
 	if (bassName) suffix += `${TITLE_NORMAL_START}/${bassName}${TITLE_NORMAL_END}`;
 
 	return suffix;

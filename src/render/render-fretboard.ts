@@ -336,6 +336,13 @@ function drawNote(
 			? layout.headerPoint(idx)
 			: layout.point(idx, note.fret - gridStartFret(model) + 0.5);
 
+	if (note.virtual) {
+		// A reference pitch, not an actually-fretted/sounding note: no shape, no finger
+		// number — just its label in parentheses, so it can't be mistaken for a played note.
+		drawVirtualLabel(svg, note.label, p.x, p.y, note.labelFontSize);
+		return;
+	}
+
 	const filled = note.fillStyle === "filled";
 	drawShape(svg, note.shape, p.x, p.y, note.radius, filled, note.ghost, note.className, note.color);
 	drawLabel(svg, note.label, p.x, p.y, filled, note.labelFontSize);
@@ -418,6 +425,25 @@ function drawLabel(
 		svg
 	);
 	t.textContent = text;
+}
+
+/** A virtual note's label, parenthesized and muted-colored — never a shape/dot, so it
+ * can't be mistaken for a physically fretted/sounding note (e.g. "(R)", "(5)"). */
+function drawVirtualLabel(svg: SVGSVGElement, label: string, cx: number, cy: number, fontSize: number): void {
+	if (!label) return;
+	const t = svgEl(
+		"text",
+		{
+			x: cx,
+			y: cy,
+			class: "fretboard-label is-virtual",
+			"text-anchor": "middle",
+			"dominant-baseline": "central",
+			style: `font-size:${fontSize}px;`,
+		},
+		svg
+	);
+	t.textContent = `(${label})`;
 }
 
 function drawFinger(svg: SVGSVGElement, finger: number | undefined, cx: number, cy: number, r: number): void {

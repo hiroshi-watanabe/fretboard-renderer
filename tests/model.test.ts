@@ -154,6 +154,105 @@ describe("resolveFretboardModel", () => {
 		expect(model.title).toBe("G7(#9, b13)");
 	});
 
+	it("folds a dominant 7th and natural 9th into 9sus4 instead of dropping both (reported regression)", () => {
+		const config: FretboardBlockConfig = {
+			startFret: 1,
+			frets: 15,
+			notes: [
+				{ s: 6, f: 5, label: "root" },
+				{ s: 5, f: 14 },
+			],
+		};
+		const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+		expect(model.title).toBe("A9sus4");
+	});
+
+	describe("omit notation and virtual notes", () => {
+		it("does not mark anything when omitNotation is off (the System/Global default)", () => {
+			const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				notes: [
+					{ s: 5, f: 3, label: "root" },
+					{ s: 4, f: 5 },
+				],
+			};
+			const model = resolveFretboardModel(config, settings);
+			expect(model.title).toBe("C5");
+		});
+
+		it("marks (omit3) on a bare power chord when omitNotation is on locally", () => {
+			const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				omitNotation: true,
+				notes: [
+					{ s: 5, f: 3, label: "root" },
+					{ s: 4, f: 5 },
+				],
+			};
+			const model = resolveFretboardModel(config, settings);
+			expect(model.title).toBe("C(omit3)");
+		});
+
+		it("names a rootless altered dominant via a virtual root, with (omit1) placed before the slash bass", () => {
+			// showInversions: true because the bass here (B, the major 3rd) is otherwise a
+			// plain inversion, hidden by default — this test is about the (omit1)/slash
+			// ordering, not the inversion-hiding feature, so it opts back in explicitly.
+			const settings = {
+				...DEFAULT_SETTINGS,
+				omittedStringBehavior: "none" as const,
+				showInversions: true,
+			};
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				omitNotation: true,
+				notes: [
+					{ s: 6, f: 3, label: "root", virtual: true }, // G — not physically fretted
+					{ s: 5, f: 2 }, // B, major 3rd
+					{ s: 4, f: 1 }, // Eb, m6 -> b13 (no plain 5th, but a 7th is present)
+					{ s: 3, f: 3 }, // Bb, m3 -> #9 (a major 3rd is also present)
+					{ s: 1, f: 1 }, // F, minor 7th
+				],
+			};
+			const model = resolveFretboardModel(config, settings);
+			expect(model.title).toBe("G7(#9, b13)(omit1)/B");
+			const rootNote = model.notes.find((n) => n.string === 6);
+			expect(rootNote?.virtual).toBe(true);
+			expect(rootNote?.isRoot).toBe(true);
+			expect(rootNote?.label).toBe("R");
+		});
+
+		it("excludes a virtual note from the bass/slash-chord calculation", () => {
+			const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				notes: [
+					{ s: 6, f: 0, virtual: true }, // would otherwise be the lowest sounding note
+					{ s: 5, f: 3, label: "root" },
+				],
+			};
+			const model = resolveFretboardModel(config, settings);
+			// If the virtual note counted as the bass, this would be a slash chord (E isn't
+			// the root C) — it must not, so the title stays a plain "C".
+			expect(model.title).toBe("C");
+		});
+
+		it("resolves a virtual (non-root) note's label normally, e.g. the 5th", () => {
+			const config: FretboardBlockConfig = {
+				startFret: 0,
+				notes: [
+					{ s: 5, f: 3, label: "root" }, // C
+					{ s: 3, f: 0, virtual: true }, // G, the 5th
+				],
+			};
+			const model = resolveFretboardModel(config, DEFAULT_SETTINGS);
+			const fifth = model.notes.find((n) => n.string === 3);
+			expect(fifth?.virtual).toBe(true);
+			expect(fifth?.label).toBe("5");
+		});
+	});
+
 	it("does not compute degrees when no note is marked root", () => {
 		const config: FretboardBlockConfig = {
 			startFret: 0,
@@ -262,8 +361,11 @@ describe("resolveFretboardModel", () => {
 		expect(model.title).toBe("□5");
 	});
 
-	it("names a slash chord when the lowest sounding string's note differs from the root", () => {
-		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+	it("names a slash chord when the lowest sounding string's note differs from the root (showInversions on)", () => {
+		// The bass here (E, the major 3rd) is a plain inversion — hidden by default (see
+		// the "hides inversions by default" test below) — so this opts back in to test
+		// the letter-naming logic itself.
+		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const, showInversions: true };
 		const config: FretboardBlockConfig = {
 			startFret: 0,
 			visible: "5-6",
@@ -274,6 +376,35 @@ describe("resolveFretboardModel", () => {
 		};
 		const model = resolveFretboardModel(config, settings);
 		expect(model.title).toBe("C/E");
+	});
+
+	it("hides an inversion's slash bass by default (the chord's own 3rd/5th/7th in the bass)", () => {
+		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			visible: "5-6",
+			notes: [
+				{ s: 6, f: 0 }, // open low E: the major 3rd, in the bass — a plain inversion
+				{ s: 5, f: 3, label: "root" }, // C
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe("C");
+	});
+
+	it("always shows a true slash chord (bass note isn't one of the chord's own tones), regardless of showInversions", () => {
+		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+		const config: FretboardBlockConfig = {
+			startFret: 0,
+			visible: "4-6",
+			notes: [
+				{ s: 6, f: 10 }, // D: the 9th, in the bass — not one of C's own chord tones
+				{ s: 5, f: 3, label: "root" }, // C
+				{ s: 4, f: 2 }, // E, major 3rd
+			],
+		};
+		const model = resolveFretboardModel(config, settings);
+		expect(model.title).toBe("Cadd9/D");
 	});
 
 	it("does not drop an altered 13th (m6 with a plain 5th) from a sus4 chord", () => {
@@ -295,7 +426,9 @@ describe("resolveFretboardModel", () => {
 	});
 
 	it("names a slash chord's bass by Roman-numeral degree in relative mode (no absolute pitch is known)", () => {
-		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+		// showInversions: true — the bass (a minor 7th above the root) is otherwise a
+		// plain inversion, hidden by default; this test is about Roman-numeral naming.
+		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const, showInversions: true };
 		const config: FretboardBlockConfig = {
 			visible: "5-6",
 			notes: [
@@ -305,7 +438,9 @@ describe("resolveFretboardModel", () => {
 		};
 		const model = resolveFretboardModel(config, settings);
 		expect(model.isRelative).toBe(true);
-		expect(model.title).toBe("□5/bVII");
+		// Root + m7 only (no 3rd, no 5th): the 7th is always shown, never silently dropped
+		// into a bare "5" power-chord reading (see the "always show 7th" omit-notation fix).
+		expect(model.title).toBe("□7/bVII");
 	});
 
 	it("applies a local chordSymbolStyle override to the auto-generated title", () => {
@@ -364,7 +499,9 @@ describe("resolveFretboardModel", () => {
 	});
 
 	it("embeds typography markers in titleMarkup but strips them from the clean title", () => {
-		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const };
+		// showInversions: true — the bass (E, the major 3rd) is otherwise a plain
+		// inversion, hidden by default; this test just needs a title with markers.
+		const settings = { ...DEFAULT_SETTINGS, omittedStringBehavior: "none" as const, showInversions: true };
 		const config: FretboardBlockConfig = {
 			visible: "5-6",
 			notes: [

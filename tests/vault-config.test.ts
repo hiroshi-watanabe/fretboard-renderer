@@ -53,4 +53,24 @@ labelMode: note
 	it("parses defaultShape: none", () => {
 		expect(parseVaultConfig("defaultShape: none")).toEqual({ defaultShape: "none" });
 	});
+
+	it("parses omitNotation: true", () => {
+		expect(parseVaultConfig("omitNotation: true")).toEqual({ omitNotation: true });
+	});
+
+	it("parses an explicit omitNotation: false (must not be dropped)", () => {
+		expect(parseVaultConfig("omitNotation: false")).toEqual({ omitNotation: false });
+	});
+
+	it("rejects a non-boolean omitNotation", () => {
+		expect(() => parseVaultConfig("omitNotation: yes")).toThrow();
+	});
+
+	it("parses showInversions: true", () => {
+		expect(parseVaultConfig("showInversions: true")).toEqual({ showInversions: true });
+	});
+
+	it("rejects a non-boolean showInversions", () => {
+		expect(() => parseVaultConfig("showInversions: yes")).toThrow();
+	});
 });

@@ -38,6 +38,13 @@ export interface FretboardPluginSettings {
 	labelFontSize: number;
 	namingMode: NamingMode;
 	chordSymbolStyle: ChordSymbolStyle;
+	/** Off by default — guitarists very commonly omit the 5th, and marking every such chord would be noisy. */
+	omitNotation: boolean;
+	/** Whether the auto-generated title shows a slash bass when it's just an inversion
+	 * (the chord's own 3rd/5th/7th in the bass) — see `isInversionBass`. A bass note that
+	 * ISN'T one of the chord's own tones (a true slash chord) is always shown regardless.
+	 * Off by default: real-world chord charts very often skip notating inversions. */
+	showInversions: boolean;
 }
 
 /** A single fret position: 0 = open, positive = fretted, "x" = muted. */
@@ -51,6 +58,11 @@ export interface NoteEntry {
 	shape?: Shape;
 	finger?: number;
 	ghost?: boolean;
+	/** True for a reference pitch that isn't physically fretted/sounding: no shape is drawn for
+	 * it, only its label in parentheses (e.g. "(R)") at its fretboard position, and it's
+	 * excluded from the "lowest sounding note" bass/slash-chord calculation. Its degree still
+	 * counts toward chord identity/tension detection like any other note. */
+	virtual?: boolean;
 	class?: string;
 	/** CSS color (e.g. "red", "#ff0000") overriding this note's fill/stroke color. */
 	color?: string;
@@ -96,6 +108,10 @@ export interface FretboardBlockConfig {
 	namingMode?: NamingMode;
 	/** Overrides System/Global chord symbol notation for this diagram's auto-generated title only. */
 	chordSymbolStyle?: ChordSymbolStyle;
+	/** Overrides System/Global Omit Notation for this diagram's auto-generated title only. */
+	omitNotation?: boolean;
+	/** Overrides System/Global "show inversions" for this diagram's auto-generated title only. */
+	showInversions?: boolean;
 	/** Multiplies the resolved string/fret spacing for this block only, e.g. 0.6 to shrink it. */
 	size?: number;
 	/** Pixel delta applied to the resolved fretSpacing before `size`, range -5..5. */
@@ -117,6 +133,8 @@ export interface RawFretboardBlockConfig {
 	orientation?: unknown;
 	namingMode?: unknown;
 	chordSymbolStyle?: unknown;
+	omitNotation?: unknown;
+	showInversions?: unknown;
 	size?: unknown;
 	fretSpacingAdjust?: unknown;
 	stringSpacingAdjust?: unknown;

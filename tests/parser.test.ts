@@ -93,6 +93,39 @@ notes:
 		expect(config.notes[0].shape).toBe("none");
 	});
 
+	it("accepts virtual: true on a note", () => {
+		const config = parseSingle("notes:\n  - {s: 6, f: 5, label: root, virtual: true}");
+		expect(config.notes[0].virtual).toBe(true);
+	});
+
+	it("rejects a non-boolean virtual", () => {
+		expect(() => parseFretboardBlock("notes:\n  - {s: 6, f: 5, virtual: yes}")).toThrow(
+			FretboardParseError
+		);
+	});
+
+	it("accepts omitNotation: true at the block level", () => {
+		const config = parseSingle("omitNotation: true\nnotes:\n  - {s: 6, f: 5}");
+		expect(config.omitNotation).toBe(true);
+	});
+
+	it("rejects a non-boolean omitNotation", () => {
+		expect(() => parseFretboardBlock("omitNotation: yes\nnotes:\n  - {s: 6, f: 5}")).toThrow(
+			FretboardParseError
+		);
+	});
+
+	it("accepts showInversions: true at the block level", () => {
+		const config = parseSingle("showInversions: true\nnotes:\n  - {s: 6, f: 5}");
+		expect(config.showInversions).toBe(true);
+	});
+
+	it("rejects a non-boolean showInversions", () => {
+		expect(() => parseFretboardBlock("showInversions: yes\nnotes:\n  - {s: 6, f: 5}")).toThrow(
+			FretboardParseError
+		);
+	});
+
 	it("rejects malformed YAML without throwing a raw error", () => {
 		expect(() => parseFretboardBlock("notes: [")).toThrow(FretboardParseError);
 	});

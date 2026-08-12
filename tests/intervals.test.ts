@@ -74,6 +74,32 @@ describe("inferChordSuffix", () => {
 		expect(suffix(new Set(["1", "5"]))).toBe("5");
 	});
 
+	describe("sus4/sus2 with a 7th (never silently dropped, folded like the dominant branch)", () => {
+		it("folds a dominant 7th + natural 9th into 9sus4 (the reported A9sus4 regression)", () => {
+			expect(suffix(new Set(["1", "2", "4", "5", "m7"]))).toBe("9sus4");
+		});
+
+		it("folds a dominant 7th + natural 13th into 13sus4", () => {
+			expect(suffix(new Set(["1", "4", "5", "6", "m7"]))).toBe("13sus4");
+		});
+
+		it("shows a bare 7sus4 when no natural 9th/13th is present", () => {
+			expect(suffix(new Set(["1", "4", "5", "m7"]))).toBe("7sus4");
+		});
+
+		it("shows maj7sus4 without dropping the major 7th", () => {
+			expect(suffix(new Set(["1", "4", "5", "M7"]))).toBe("maj7sus4");
+		});
+
+		it("shows a bare 7sus2 (no separate 9 fold, since sus2 already occupies that slot)", () => {
+			expect(suffix(new Set(["1", "2", "5", "m7"]))).toBe("7sus2");
+		});
+
+		it("shows maj7sus2 without dropping the major 7th", () => {
+			expect(suffix(new Set(["1", "2", "5", "M7"]))).toBe("maj7sus2");
+		});
+	});
+
 	it("names a fully diminished 7th (b5 + the enharmonic bb7)", () => {
 		expect(suffix(new Set(["1", "m3", "b5", "6"]))).toBe("dim7");
 	});
@@ -223,6 +249,50 @@ describe("inferChordSuffix", () => {
 
 		it("appends #11 to a major 7th chord", () => {
 			expect(suffix(new Set(["1", "3", "5", "M7", "b5"]))).toBe("maj7(#11)");
+		});
+	});
+
+	describe("omit notation (off by default)", () => {
+		it("does not mark anything when omitNotation is off, even with rootOmitted true", () => {
+			expect(suffix(new Set(["1", "5"]), "standard", undefined, false, true)).toBe("5");
+		});
+
+		it("replaces a bare power chord's 5 with (omit3) when on", () => {
+			expect(suffix(new Set(["1", "5"]), "standard", undefined, true)).toBe("(omit3)");
+		});
+
+		it("always shows a 7th with no 3rd, regardless of omitNotation", () => {
+			expect(suffix(new Set(["1", "5", "m7"]))).toBe("7");
+		});
+
+		it("appends (omit3) alongside a 7th shown with no 3rd, when on", () => {
+			expect(suffix(new Set(["1", "5", "m7"]), "standard", undefined, true)).toBe("7(omit3)");
+		});
+
+		it("does not mark omit3 on a sus4/sus2 chord (the 3rd's role is filled)", () => {
+			expect(suffix(new Set(["1", "4", "5"]), "standard", undefined, true)).toBe("sus4");
+		});
+
+		it("appends (omit5) when no 5th-family degree is present at all", () => {
+			expect(suffix(new Set(["1", "3", "m7"]), "standard", undefined, true)).toBe("7(omit5)");
+		});
+
+		it("does not mark omit5 when a plain 5th is present", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7"]), "standard", undefined, true)).toBe("7");
+		});
+
+		it("appends (omit1) when rootOmitted is true", () => {
+			expect(suffix(new Set(["1", "3", "5", "m7"]), "standard", undefined, true, true)).toBe("7(omit1)");
+		});
+
+		it("combines #9/b13 tensions with (omit1) — the user's rootless G7(#9, b13) case", () => {
+			expect(suffix(new Set(["1", "3", "m3", "m7", "m6"]), "standard", undefined, true, true)).toBe(
+				"7(#9, b13)(omit1)"
+			);
+		});
+
+		it("keeps omit markers parenthesized even in jazz style (unlike compact tension symbols)", () => {
+			expect(suffix(new Set(["1", "5"]), "jazz", undefined, true)).toBe("(omit3)");
 		});
 	});
 

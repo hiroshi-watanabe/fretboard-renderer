@@ -121,6 +121,16 @@ export class FretboardSettingTab extends PluginSettingTab {
 						},
 					},
 					{
+						name: "Omit notation",
+						desc: 'Mark a chord missing an expected tone, e.g. "C(omit3)" for a bare power chord, "G7(omit3)" for a 7th voiced without its 3rd, "(omit5)" when the 5th is missing entirely. Off by default — guitarists very commonly omit the 5th, and marking every such chord would be noisy.',
+						control: { type: "toggle", key: "omitNotation", defaultValue: false },
+					},
+					{
+						name: "Show inversions",
+						desc: 'Show the slash-chord bass note when it\'s just an inversion — the chord\'s own 3rd, 5th, or 7th played as the lowest note (e.g. "C/E"). Off by default — real-world chord charts very often skip notating this. A bass note that isn\'t one of the chord\'s own tones (a true slash chord) is always shown regardless.',
+						control: { type: "toggle", key: "showInversions", defaultValue: false },
+					},
+					{
 						name: "Default shape",
 						desc: '"None" draws no outline — just the label on a borderless filled backdrop.',
 						control: {
@@ -357,6 +367,30 @@ export class FretboardSettingTab extends PluginSettingTab {
 						settings.chordSymbolStyle = value as typeof settings.chordSymbolStyle;
 						await this.plugin.saveSettings();
 					})
+			);
+
+		new Setting(containerEl)
+			.setName("Omit notation")
+			.setDesc(
+				'Mark a chord missing an expected tone, e.g. "C(omit3)" for a bare power chord, "G7(omit3)" for a 7th voiced without its 3rd, "(omit5)" when the 5th is missing entirely. Off by default — guitarists very commonly omit the 5th, and marking every such chord would be noisy.'
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(settings.omitNotation).onChange(async (value) => {
+					settings.omitNotation = value;
+					await this.plugin.saveSettings();
+				})
+			);
+
+		new Setting(containerEl)
+			.setName("Show inversions")
+			.setDesc(
+				'Show the slash-chord bass note when it\'s just an inversion — the chord\'s own 3rd, 5th, or 7th played as the lowest note (e.g. "C/E"). Off by default — real-world chord charts very often skip notating this. A bass note that isn\'t one of the chord\'s own tones (a true slash chord) is always shown regardless.'
+			)
+			.addToggle((toggle) =>
+				toggle.setValue(settings.showInversions).onChange(async (value) => {
+					settings.showInversions = value;
+					await this.plugin.saveSettings();
+				})
 			);
 
 		new Setting(containerEl)

@@ -34,6 +34,8 @@ const BLOCK_KEYS: ReadonlySet<string> = new Set([
 	"orientation",
 	"namingMode",
 	"chordSymbolStyle",
+	"omitNotation",
+	"showInversions",
 	"size",
 	"fretSpacingAdjust",
 	"stringSpacingAdjust",
@@ -50,6 +52,7 @@ const NOTE_KEYS: ReadonlySet<string> = new Set([
 	"shape",
 	"finger",
 	"ghost",
+	"virtual",
 	"class",
 	"color",
 	"fillStyle",
@@ -173,6 +176,18 @@ function parseSingleDiagram(raw: unknown, prefix: string): FretboardBlockConfig 
 		}
 		config.chordSymbolStyle = chordSymbolStyle as ChordSymbolStyle;
 	}
+	if (obj.omitNotation !== undefined) {
+		if (typeof obj.omitNotation !== "boolean") {
+			throw new FretboardParseError(`"${pfx(prefix, "omitNotation")}" must be true or false.`);
+		}
+		config.omitNotation = obj.omitNotation;
+	}
+	if (obj.showInversions !== undefined) {
+		if (typeof obj.showInversions !== "boolean") {
+			throw new FretboardParseError(`"${pfx(prefix, "showInversions")}" must be true or false.`);
+		}
+		config.showInversions = obj.showInversions;
+	}
 	if (obj.size !== undefined) {
 		config.size = expectPositiveNumber(obj.size, pfx(prefix, "size"));
 	}
@@ -211,6 +226,7 @@ function normalizeNote(raw: unknown, index: number, base: string): NoteEntry {
 				shape: r.shape,
 				finger: r.finger,
 				ghost: r.ghost,
+				virtual: r.virtual,
 				class: r.class,
 				color: r.color,
 				fillStyle: r.fillStyle,
@@ -232,6 +248,7 @@ function buildNote(
 		shape?: unknown;
 		finger?: unknown;
 		ghost?: unknown;
+		virtual?: unknown;
 		class?: unknown;
 		color?: unknown;
 		fillStyle?: unknown;
@@ -267,6 +284,12 @@ function buildNote(
 			throw new FretboardParseError(`${noteCtx}.ghost must be true or false.`);
 		}
 		note.ghost = fields.ghost;
+	}
+	if (fields.virtual !== undefined) {
+		if (typeof fields.virtual !== "boolean") {
+			throw new FretboardParseError(`${noteCtx}.virtual must be true or false.`);
+		}
+		note.virtual = fields.virtual;
 	}
 	if (fields.class !== undefined) {
 		note.class = expectString(fields.class, `${noteCtx}.class`);

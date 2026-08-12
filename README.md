@@ -111,6 +111,8 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Accidental | `sharp` (#) / `flat` (b) | `sharp` |
 | Naming mode | `chord` (name a chord) / `scale` (name a scale, see [below](#naming-mode-chord-vs-scale)) | `chord` |
 | Chord symbol style | `standard` / `berklee` / `jazz`, see [below](#chord-symbol-style--advanced-inference) | `standard` |
+| Omit notation | On/off toggle — marks a chord missing an expected tone, e.g. `C(omit3)`, `G7(omit3)`, `(omit5)`. Off by default (guitarists very commonly omit the 5th — marking every such chord would be noisy). See [below](#chord-symbol-style--advanced-inference) | Off |
+| Show inversions | On/off toggle — shows the slash bass when it's just an inversion (the chord's own 3rd, 5th, or 7th as the lowest note, e.g. `C/E`). Off by default (real-world chord charts very often skip notating this). See [below](#chord-symbol-style--advanced-inference) | Off |
 | Default shape | `circle` / `square` / `triangle` / `none` (no outline, label only — see [below](#notes-required)) | `circle` |
 | Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
@@ -180,13 +182,14 @@ notes:
 | `shape` | – | `circle` / `square` / `triangle` / `none` — draws no outline, just the label (or finger number, or any value that would otherwise sit inside the shape). Still rendered as a borderless filled circle underneath — with or without a label — so it isn't literally invisible and text doesn't collide with the fret/string line behind it |
 | `finger` | – | Finger number, printed small just outside the dot |
 | `ghost` | – | `true` draws a dashed/translucent outline |
+| `virtual` | – | `true` marks this as a reference pitch, not an actually-fretted/sounding note — see [Virtual notes](#virtual-notes) below |
 | `class` | – | Arbitrary CSS class name, for highlighting via a CSS snippet |
 | `color` | – | CSS color for just this note (`red`, `#ff0000`, `var(--color-red)`, ...). Overrides System/Global fill style and the root-highlight color |
 | `fillStyle` | – | `filled` / `outlined`. Overrides System/Global `Fill style` for just this note |
 | `sizeAdjust` | – | Integer -5..5. Nudges just this note's dot size (px) from `Note size` |
 | `labelSizeAdjust` | – | Integer -5..5. Nudges just this note's label font size (px) from `Label font size` |
 
-`color`, `fillStyle`, `sizeAdjust`, and `labelSizeAdjust` are only available in object form (`{s: ..., f: ...}`) — not in the `[s, f, label, shape, finger]` shorthand array.
+`color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust`, and `virtual` are only available in object form (`{s: ..., f: ...}`) — not in the `[s, f, label, shape, finger]` shorthand array.
 
 Notes highlighted as the root (same pitch class as the `label: root` note, including octaves) use the System accent color by default (Obsidian's `--interactive-accent` theme variable, typically purple/blue) — this is intentional default behavior. Use `color` above to override the color of any specific note, e.g. to make it red.
 
@@ -200,6 +203,8 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 | `orientation` | `horizontal` / `vertical` | Overrides orientation for this diagram only |
 | `namingMode` | `chord` / `scale` | Overrides [Naming mode](#naming-mode-chord-vs-scale) for this diagram's auto-generated title only |
 | `chordSymbolStyle` | `standard` / `berklee` / `jazz` | Overrides [Chord symbol style](#chord-symbol-style--advanced-inference) for this diagram's auto-generated title only |
+| `omitNotation` | Boolean | Overrides Omit notation for this diagram's auto-generated title only — see [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) |
+| `showInversions` | Boolean | Overrides Show inversions for this diagram's auto-generated title only — see [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) |
 | `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
 | `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |
 | `stringSpacingAdjust` | Integer -5..5 | Pixel nudge to string spacing, applied before `size` |
@@ -248,13 +253,14 @@ Currently covers standard Western scales only (traditional Japanese scales and o
 
 Beyond root + basic quality, the auto-generated title works out real chord theory from the notes present:
 
-- **No 3rd:** `sus4` (a 4th is present), `sus2` (a 2nd is present), or a power chord `5` (neither).
+- **No 3rd:** `sus4` (a 4th is present), `sus2` (a 2nd is present), or a power chord `5` (neither). A 7th is never dropped even here — e.g. root+5th+m7 with no 3rd or sus tone names as `7`, not a bare `5`. On top of `sus4` specifically, a dominant 7th folds in a natural 9th/13th the same way as the tension-folding rule below — `9sus4`, `13sus4`, or a bare `7sus4` — since sus4's 4th and a 9th occupy different slots (unlike `sus2`, where the 2nd already *is* the 9th, so a 7th there just stays bare: `7sus2`).
 - **No 7th:** extra notes become `add9` / `add11`.
 - **7th present, dominant (major 3rd + m7):** a 9th folds the whole chord into `C9` (or `C11`/`C13` if an 11th/13th is present too). An 11th or 13th *without* a 9th can't fold in this way, so it's parenthesized onto `7` instead: `C7(11)`, `C7(13)`.
 - **7th present, `maj7` or `m7`:** the base quality always stays intact, with the highest tension parenthesized on top, e.g. `Cmaj7(9)`, `Cm7(11)` (bare, no parens, in Jazz style: `CΔ79`, `C-711`).
 - **Altered tensions (`b9` / `#9` / `#11` / `b13` / `b5`):** always appended as independent extras, in every case above — including `sus4`/`sus2`/power chords — never silently dropped. Each shares a degree label with something else in this one-octave system, so most only read as the altered tension when something disambiguates them: `b9` (the `b2` degree) has no such ambiguity and always reads as an altered 9th; `#9` (the `m3` degree) only reads as `#9` when a major 3rd is *also* present — otherwise it's just the chord's own minor 3rd; `#11` (the `b5` degree) only reads as `#11` when a plain 5th is *also* present — otherwise it's the chord's own flatted 5th; `b13` (the `m6` degree) reads as `b13` whenever a plain 5th *or* a 7th is present — a guitarist very commonly mutes the plain 5th on an altered 7th-chord voicing while keeping the tension, so a 7th alone is enough. Only with neither a plain 5th nor a 7th does that same `m6` note read as `#5`/augmented instead (see [Interval auto-calculation](#interval-auto-calculation-and-root-highlighting)). E.g. `C9(b5)`, `Cm7(9, b5)`, `Csus4(b13)`, `G7(#9, b13)` (`C9b5`, `Csus4b13` in Jazz style).
 - **6th chords:** `6` (a 6th, no 7th), or `6/9` if a 2nd is present too — never parenthesized.
-- **Slash chords:** when the lowest-sounding note isn't the root, it's appended after `/` — an absolute note name in absolute mode (`Cmaj7/E`), or a Roman-numeral degree in relative mode, where no real pitch is known (`□m7/bVII`).
+- **Omit notation** (off by default — see Settings): marks a chord tone that theory implies but isn't actually present. `(omit3)` when nothing fills the 3rd's role: a bare power chord's `5` is replaced outright (`C(omit3)`, not `C5(omit3)` — the marker alone already says "just root+5"), while a 7th chord voiced without a 3rd keeps its `7`/`maj7` and gets `(omit3)` appended (`G7(omit3)`). `(omit5)` when no 5th-family degree (plain, flat, or sharp) is present at all. `(omit1)` when the root was only supplied by a [virtual note](#virtual-notes) (see below), never an actually-fretted one. Always parenthesized — even in Jazz style, where compact tensions normally go bare — since these are full words, not tension symbols, and `(omit1)` sits before any slash bass, e.g. `G7(#9, b13)(omit1)/B`.
+- **Slash chords:** when the lowest-sounding note isn't the root, it's appended after `/` — an absolute note name in absolute mode (`Cmaj7/E`), or a Roman-numeral degree in relative mode, where no real pitch is known (`□m7/bVII`). A [virtual note](#virtual-notes) is never counted as the lowest-sounding note. **Show inversions** (off by default) controls whether this shows at all when the bass is just an inversion — the chord's own 3rd, 5th, or 7th played as the lowest note, not new harmonic information; real-world chord charts very often skip notating it. A bass note that *isn't* one of the chord's own tones (a true slash chord, e.g. a 9th or an unrelated pitch underneath) is always shown regardless of this setting, since the plain chord symbol can't otherwise convey it.
 
 **Chord symbol style** controls the notation itself, independently of the rules above:
 
@@ -268,6 +274,28 @@ Beyond root + basic quality, the auto-generated title works out real chord theor
 | Added tension | `Cmaj7(9)` | `Cmaj7(9)` | `CΔ79` (no parens) |
 
 Set it in Settings, in `fretboard-renderer.yaml` for the whole vault, or per diagram with `chordSymbolStyle: jazz`.
+
+### Virtual notes
+
+Altered dominant chords like `G7(#9, b13)` are commonly played *without* the root at all — it's hard to reach, and the tension notes carry the color. But the root still has to be specified somewhere for interval math to work. Mark a note `virtual: true` and it stops being an actually-fretted, physically-sounding note — no shape/dot is drawn for it, just its computed label in parentheses at its fretboard position (e.g. `(R)` for a virtual root, `(5)` for a virtual 5th) — while still fully counting toward interval/chord-name calculation, exactly like a real note:
+
+```fretboard
+omitNotation: true
+notes:
+  - {s: 6, f: 3, label: root, virtual: true}
+  - [5, 2]
+  - [4, 1]
+  - [3, 3]
+  - [1, 1]
+```
+
+This renders as `G7(#9, b13)(omit1)/B` — the virtual root establishes the reference pitch (so `#9`/`b13` can be computed at all), `(omit1)` shows the root itself isn't actually fretted (since [Omit notation](#chord-symbol-style--advanced-inference) is on here), and the slash names whichever note actually ends up lowest.
+
+A virtual note:
+- Draws no shape, no finger number — just `(label)`, in a muted color, so it can't be mistaken for a played note.
+- Is excluded from the "lowest sounding note" bass/slash-chord calculation.
+- Still occupies its (`s`, `f`) position for grid sizing (`frets` auto-expansion, `visible`, etc.) like any other note.
+- Is available in object form only (`{s: ..., f: ..., virtual: true}`) — not in the shorthand array.
 
 ### Multiple diagrams side by side (`diagrams`)
 

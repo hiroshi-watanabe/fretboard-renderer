@@ -18,4 +18,6 @@ export const DEFAULT_SETTINGS: FretboardPluginSettings = {
 	labelFontSize: 10,
 	namingMode: "chord",
 	chordSymbolStyle: "standard",
+	omitNotation: false,
+	showInversions: false,
 };
