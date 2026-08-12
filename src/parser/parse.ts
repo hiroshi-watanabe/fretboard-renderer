@@ -1,4 +1,4 @@
-import { parseYaml } from "obsidian";
+import { parse as parseYaml } from "yaml";
 import type {
 	BarreEntry,
 	BoxEntry,
@@ -36,6 +36,7 @@ const BLOCK_KEYS: ReadonlySet<string> = new Set([
 	"chordSymbolStyle",
 	"omitNotation",
 	"showInversions",
+	"scaleAnalyze",
 	"size",
 	"fretSpacingAdjust",
 	"stringSpacingAdjust",
@@ -187,6 +188,12 @@ function parseSingleDiagram(raw: unknown, prefix: string): FretboardBlockConfig 
 			throw new FretboardParseError(`"${pfx(prefix, "showInversions")}" must be true or false.`);
 		}
 		config.showInversions = obj.showInversions;
+	}
+	if (obj.scaleAnalyze !== undefined) {
+		if (typeof obj.scaleAnalyze !== "boolean") {
+			throw new FretboardParseError(`"${pfx(prefix, "scaleAnalyze")}" must be true or false.`);
+		}
+		config.scaleAnalyze = obj.scaleAnalyze;
 	}
 	if (obj.size !== undefined) {
 		config.size = expectPositiveNumber(obj.size, pfx(prefix, "size"));

@@ -13,6 +13,9 @@
 	"keywords": ["obsidian-plugin", "guitar", "fretboard", "music-theory"],
 	"author": "Hiroshi Watanabe",
 	"license": "MIT",
+	"dependencies": {
+		"yaml": "^2.4.1"
+	},
 	"devDependencies": {
 		"@types/node": "^20.11.30",
 		"@typescript-eslint/eslint-plugin": "^7.4.0",
@@ -21,7 +24,6 @@
 		"obsidian": "latest",
 		"tslib": "2.6.2",
 		"typescript": "^5.4.3",
-		"vitest": "^1.4.0",
-		"yaml": "^2.4.1"
+		"vitest": "^1.4.0"
 	}
 }

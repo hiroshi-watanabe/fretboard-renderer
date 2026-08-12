@@ -3,3 +3,4 @@ main.js
 *.js.map
 .obsidian/
 data.json
+vscode-extension/dist/

@@ -1,4 +1,4 @@
-import { parseYaml } from "obsidian";
+import { parse as parseYaml } from "yaml";
 import type { FretboardPluginSettings } from "../types";
 
 /** Fixed vault-root path for the Global config layer (Local > Global > System). */
