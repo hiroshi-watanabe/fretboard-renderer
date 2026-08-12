@@ -4,6 +4,18 @@
 
 Render guitar fretboard diagrams as SVG in your Obsidian notes, from a lightweight YAML syntax inside fenced code blocks. From analyzing chord progressions to checking pentatonic/mode positions, the goal is clean-looking diagrams with minimal typing.
 
+![Several chord diagrams rendered side by side](images/hero.png)
+
+## Getting started
+
+### Install
+
+Open Settings → Community plugins → Browse, search for **"Fretboard Renderer"**, and install it. (Or see [Development](#development) below to run it from source.)
+
+### Your first diagram
+
+Add a fenced code block with the language set to `fretboard`, and list the notes you want to show — that's the only required part:
+
 ````markdown
 ```fretboard
 notes:
@@ -16,18 +28,51 @@ notes:
 ```
 ````
 
-## Installation
+![The Em chord diagram rendered from the example above](images/basic-example.png)
 
-### From Community Plugins
-Search for "Fretboard Renderer" in Obsidian's Community Plugins browser and install it.
+`s` is the string number (1 = highest-pitched string) and `f` is the fret (`0` = open, `x` = muted). Marking one note `label: root` is enough for the plugin to work out the chord name and highlight every note that shares that root, automatically.
 
-### Manual / development build
-1. Clone or place this repository at `<vault>/.obsidian/plugins/fretboard-renderer`.
-2. `npm install`
-3. `npm run build` (one-off build), or `npm run dev` (watch mode, rebuilds on save)
-4. Enable "Fretboard Renderer" in Obsidian's Settings → Community plugins.
+## Feature highlights
 
-## Three configuration layers (System / Global / Local)
+### Automatic root highlighting & degree labels
+Mark any note `label: root` and the plugin computes each note's interval (1, b2, 2, m3, 3, ...) relative to it, and highlights notes sharing the root's pitch (including other octaves) with a different shape/color — no manual styling needed.
+
+### Absolute or relative (movable) diagrams
+Give a `startFret` (or use an open string) for a real, fixed-position chord name like `Cmaj7`. Omit it for a movable pattern — the plugin infers the position and labels it generically (`□...`) instead, since the same shape means a different chord depending on where you play it. `boxes` and `paths` pair well with relative mode, for outlining a scale position and tracing a run through it:
+
+![A movable pentatonic scale-box pattern, with a dashed box outline and connecting paths between the notes](images/relative-scale-box.png)
+
+### Multiple diagrams side by side
+Use `diagrams:` to lay out several charts in one block — handy for a progression like Cmaj7 → Dm7 → G7 — without fighting Obsidian's block layout:
+
+````markdown
+```fretboard
+diagrams:
+  - {title: Cmaj7, startFret: 0, size: 0.6, notes: [{s: 5, f: 3, label: root}, [4, 2], [3, 0], [2, 0]]}
+  - {title: Dm7, startFret: 0, size: 0.6, notes: [{s: 4, f: 0, label: root}, [3, 2], [2, 1], [1, 1]]}
+  - {title: G7, startFret: 0, size: 0.6, notes: [{s: 6, f: 3, label: root}, [5, 2], [4, 0], [3, 0], [2, 0], [1, 1]]}
+```
+````
+
+### Horizontal or vertical orientation
+Switch the whole vault (Settings, or a vault-wide `fretboard-renderer.yaml`), or just one diagram with `orientation: vertical`.
+
+![The same shape drawn horizontally and vertically](images/orientation.png)
+
+### Fine control when you need it
+Per-note `color`, `fillStyle`, `sizeAdjust`; barres, boxed scale positions, dot-to-dot paths, custom tuning, note-name vs. degree labels, and more — see [Reference](#reference) below.
+
+## Configuration, in brief
+
+Settings are layered in three tiers, each overriding the last: **Local** (this block's YAML) > **Global** (a `fretboard-renderer.yaml` file at the vault root, for vault-wide defaults) > **System** (the plugin's Settings tab, for install-wide defaults). Most people only ever need Local (in the code block) and the Settings tab — Global is there for when you want one vault-wide look without repeating YAML in every note. Full details in [Reference](#reference).
+
+---
+
+## Reference
+
+Everything below is the complete option reference — skip to whatever you need.
+
+### Configuration layers (System / Global / Local)
 
 Configuration is layered in three tiers, **each one overriding the last**:
 
@@ -45,7 +90,7 @@ System (the plugin's Settings tab)
 | **Global** | `fretboard-renderer.yaml` at the vault root | Every ```fretboard block in that vault |
 | **Local** | YAML inside each ```fretboard code block | That one block only |
 
-### System (Settings tab)
+#### System (Settings tab)
 
 Change these under Settings → Fretboard Renderer. They're the defaults for every diagram in the vault. The settings tab is organized into four sections: "Layout & dimensions", "Display & style", "Note appearance", and "Tuning & fallback".
 
@@ -69,7 +114,7 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 
 `Label mode: note` only shows note names in **absolute mode** (`startFret` given, or an explicit open string `f: 0` present). In relative/movable mode (`startFret` omitted and no open string), the actual notes depend on where the shape is played, so `note` mode shows no automatic label either (interval labels are unaffected, since the same relationship holds wherever the shape is played).
 
-### Global (vault-wide YAML config file)
+#### Global (vault-wide YAML config file)
 
 Create a file named **`fretboard-renderer.yaml`** at the vault's **root** (not inside `.obsidian/`) to override System values for the whole vault. It accepts the same keys as the System table above.
 
@@ -84,7 +129,7 @@ labelMode: note
 - Saving the file takes effect on the next render — no need to reload the plugin.
 - A syntax error shows a one-time Obsidian notice and falls back to System settings (it won't break every diagram in the vault).
 
-### Local (YAML inside each ```fretboard block)
+#### Local (YAML inside each ```fretboard block)
 
 Write this directly inside each note's ```fretboard code block. It has the highest priority, overriding both System and Global. Only `notes` is required.
 
@@ -104,7 +149,7 @@ notes:
   - {s: 5, f: 7, finger: 3, ghost: true}
 ```
 
-#### `notes` (required)
+##### `notes` (required)
 
 An array of note placements. Both object form and a positional shorthand array are accepted.
 
@@ -135,7 +180,7 @@ notes:
 
 Notes highlighted as the root (same pitch class as the `label: root` note, including octaves) use the System accent color by default (Obsidian's `--interactive-accent` theme variable, typically purple/blue) — this is intentional default behavior. Use `color` above to override the color of any specific note, e.g. to make it red.
 
-#### Other Local options (all optional)
+##### Other Local options (all optional)
 
 | Key | Type | Description |
 | :--- | :--- | :--- |
@@ -153,18 +198,18 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 
 `size` / `fretSpacingAdjust` / `stringSpacingAdjust` (whole diagram) and each note's `sizeAdjust` / `labelSizeAdjust` exist so you can fine-tune appearance from a note's YAML instead of editing the plugin's own `styles.css` — that file isn't meant to be edited by users. Fine-grained color is likewise handled per-note via `color`, not CSS.
 
-## Absolute mode vs. relative mode
+### Absolute mode vs. relative mode
 
 - **Absolute mode:** `startFret` is given, or — even without it — `notes` contains an explicit open string (`f: 0`), since a shape with an open string can't physically be moved up the neck. Generates a real chord name (e.g. `Cmaj7`), and only draws the nut (thick/double line) when the left edge is truly fret 0.
 - **Relative mode:** `startFret` is omitted and no open string is present. Treated as a movable pattern: the leftmost fret is set automatically to the lowest fretted note (excluding 0 and x), no fret numbers are printed, and a relative chord name is generated (e.g. `□maj7`).
 
-## Interval auto-calculation and root highlighting
+### Interval auto-calculation and root highlighting
 
 Marking any note with `label: root` auto-computes each note's interval degree (`1, b2, 2, m3, 3, 4, b5, 5, m6, 6, m7, M7`) relative to the tuning, and shows it when label mode is `interval`. Notes matching the root's pitch class (including other octaves) are automatically highlighted (different shape and/or color).
 
 This calculation can't distinguish tensions beyond one octave — e.g. a 9th looks the same as a 2nd, an 11th the same as a 4th. To show them correctly, override a note's `label` (e.g. `label: "9"`) or the diagram's `title` (e.g. `title: Cmaj9`) explicitly.
 
-## Multiple diagrams side by side (`diagrams`)
+### Multiple diagrams side by side (`diagrams`)
 
 Writing separate ```fretboard blocks back to back doesn't reliably place them side by side — that depends on how Obsidian itself wraps markdown blocks, which a CSS snippet can't always override (Obsidian sometimes wraps each code block in an outer element the plugin has no access to).
 
@@ -205,7 +250,7 @@ diagrams:
 - Wrapping happens automatically based on the available width.
 - Errors are reported with the diagram's index, e.g. `diagrams[0].notes`.
 
-## Error handling
+### Error handling
 
 - **Local (a block's YAML):** A syntax error or invalid value doesn't crash the plugin — it shows a red error message inside that code block.
 - **Global (vault-wide file):** A syntax error in `fretboard-renderer.yaml` doesn't break every diagram in the vault — it shows a one-time Obsidian notice and falls back to System settings.
@@ -219,6 +264,8 @@ npm run dev    # esbuild watch build (keep this running while developing)
 npm run build  # type-check + production build (produces main.js)
 npm test       # unit tests via vitest
 ```
+
+See [doc/TECH_STACK.md](doc/TECH_STACK.md) for the toolchain, dependencies, and source layout.
 
 ## License
 
