@@ -4,3 +4,4 @@ main.js
 .obsidian/
 data.json
 vscode-extension/dist/
+*.vsix

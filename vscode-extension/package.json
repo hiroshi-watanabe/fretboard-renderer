@@ -3,7 +3,8 @@
 	"displayName": "Fretboard Renderer",
 	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced ```fretboard code blocks, in VSCode's Markdown preview.",
 	"version": "0.2.0",
-	"publisher": "TODO-set-before-publishing",
+	"publisher": "hiroshi-watanabe",
+	"icon": "media/icon.png",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -13,6 +14,9 @@
 	"engines": {
 		"vscode": "^1.74.0"
 	},
+	"activationEvents": [
+		"onMarkdownItPluginRegistration"
+	],
 	"categories": [
 		"Other"
 	],
@@ -34,7 +38,10 @@
 			"properties": {
 				"fretboardRenderer.orientation": {
 					"type": "string",
-					"enum": ["horizontal", "vertical"],
+					"enum": [
+						"horizontal",
+						"vertical"
+					],
 					"default": "horizontal",
 					"description": "Direction the fretboard is drawn in."
 				},
@@ -64,29 +71,57 @@
 				},
 				"fretboardRenderer.labelMode": {
 					"type": "string",
-					"enum": ["interval", "note", "none"],
-					"enumDescriptions": ["Interval (degree)", "Note name", "None"],
+					"enum": [
+						"interval",
+						"note",
+						"none"
+					],
+					"enumDescriptions": [
+						"Interval (degree)",
+						"Note name",
+						"None"
+					],
 					"default": "interval",
 					"description": "What to print inside each note dot by default."
 				},
 				"fretboardRenderer.accidental": {
 					"type": "string",
-					"enum": ["sharp", "flat"],
-					"enumDescriptions": ["Sharp (#)", "Flat (b)"],
+					"enum": [
+						"sharp",
+						"flat"
+					],
+					"enumDescriptions": [
+						"Sharp (#)",
+						"Flat (b)"
+					],
 					"default": "sharp",
 					"description": "Preferred spelling for note-name labels."
 				},
 				"fretboardRenderer.namingMode": {
 					"type": "string",
-					"enum": ["chord", "scale"],
-					"enumDescriptions": ["Chord", "Scale"],
+					"enum": [
+						"chord",
+						"scale"
+					],
+					"enumDescriptions": [
+						"Chord",
+						"Scale"
+					],
 					"default": "chord",
 					"description": "Auto-generated title: name a chord (e.g. \"Am7\"), or reverse-engineer the best-fitting scale for the notes present (e.g. \"A Minor Pentatonic\"), flagging leftover notes as passing notes (e.g. \"A Minor Pentatonic (+2)\")."
 				},
 				"fretboardRenderer.chordSymbolStyle": {
 					"type": "string",
-					"enum": ["standard", "berklee", "jazz"],
-					"enumDescriptions": ["Standard (pop)", "Berklee", "Jazz (Real Book)"],
+					"enum": [
+						"standard",
+						"berklee",
+						"jazz"
+					],
+					"enumDescriptions": [
+						"Standard (pop)",
+						"Berklee",
+						"Jazz (Real Book)"
+					],
 					"default": "standard",
 					"description": "Notation convention for auto-generated chord suffixes, e.g. minor: \"m\" / \"-\" / \"-\"; major 7th: \"maj7\" / \"maj7\" / \"Δ7\"; half-diminished: \"m7b5\" / \"-7b5\" / \"ø7\"."
 				},
@@ -102,29 +137,61 @@
 				},
 				"fretboardRenderer.defaultShape": {
 					"type": "string",
-					"enum": ["circle", "square", "triangle", "none"],
-					"enumDescriptions": ["Circle", "Square", "Triangle", "None"],
+					"enum": [
+						"circle",
+						"square",
+						"triangle",
+						"none"
+					],
+					"enumDescriptions": [
+						"Circle",
+						"Square",
+						"Triangle",
+						"None"
+					],
 					"default": "circle",
 					"description": "\"None\" draws no outline — just the label on a borderless filled backdrop."
 				},
 				"fretboardRenderer.fillStyle": {
 					"type": "string",
-					"enum": ["filled", "outlined"],
-					"enumDescriptions": ["Filled (dark dot, light text)", "Outlined (light dot, dark text)"],
+					"enum": [
+						"filled",
+						"outlined"
+					],
+					"enumDescriptions": [
+						"Filled (dark dot, light text)",
+						"Outlined (light dot, dark text)"
+					],
 					"default": "outlined",
 					"description": "Note dot fill style."
 				},
 				"fretboardRenderer.nutStyle": {
 					"type": "string",
-					"enum": ["thick", "double"],
-					"enumDescriptions": ["Thick line", "Double line"],
+					"enum": [
+						"thick",
+						"double"
+					],
+					"enumDescriptions": [
+						"Thick line",
+						"Double line"
+					],
 					"default": "thick",
 					"description": "How the fret-0 line is drawn."
 				},
 				"fretboardRenderer.fretNumbering": {
 					"type": "string",
-					"enum": ["all", "dotted", "inlay", "none"],
-					"enumDescriptions": ["Show all", "Only fretted frets", "Inlay markers only", "Hide"],
+					"enum": [
+						"all",
+						"dotted",
+						"inlay",
+						"none"
+					],
+					"enumDescriptions": [
+						"Show all",
+						"Only fretted frets",
+						"Inlay markers only",
+						"Hide"
+					],
 					"default": "inlay",
 					"description": "\"Inlay markers\" shows only the standard fretboard inlay positions (3, 5, 7, 9, 12, 15, ...)."
 				},
@@ -147,8 +214,16 @@
 				},
 				"fretboardRenderer.omittedStringBehavior": {
 					"type": "string",
-					"enum": ["open", "muted", "none"],
-					"enumDescriptions": ["Treat as open (0)", "Treat as muted (x)", "Draw nothing"],
+					"enum": [
+						"open",
+						"muted",
+						"none"
+					],
+					"enumDescriptions": [
+						"Treat as open (0)",
+						"Treat as muted (x)",
+						"Draw nothing"
+					],
 					"default": "open",
 					"description": "How to render strings that are not mentioned in a block's notes."
 				}
@@ -157,11 +232,14 @@
 	},
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+		"package": "npm run build && vsce package",
+		"publish": "npm run build && vsce publish"
 	},
 	"devDependencies": {
 		"@types/node": "^20.11.30",
 		"@types/vscode": "^1.74.0",
+		"@vscode/vsce": "^2.24.0",
 		"esbuild": "^0.20.2",
 		"obsidian": "^1.13.1",
 		"typescript": "^5.4.3"
