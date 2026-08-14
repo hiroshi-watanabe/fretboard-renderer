@@ -38,7 +38,6 @@
 	stroke-width: 1.5;
 }
 
-.fretboard-startfret,
 .fretboard-fret-number {
 	font-size: 10px;
 	fill: var(--text-muted);
@@ -127,5 +126,20 @@
 	padding: 0.5em 0.75em;
 	white-space: pre-wrap;
 	font-family: var(--font-monospace);
+	font-size: 0.85em;
+}
+
+.fretboard-suggest-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1em;
+}
+
+.fretboard-suggest-value {
+	font-family: var(--font-monospace);
+}
+
+.fretboard-suggest-detail {
+	color: var(--text-muted);
 	font-size: 0.85em;
 }

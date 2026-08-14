@@ -1,15 +1,16 @@
 # Tech Stack
 
-This document describes the toolchain and libraries used to build and test the Fretboard Renderer plugin, and why each one was chosen.
+This document describes the toolchain and libraries used to build and test the Fretboard Renderer plugin, and why each one was chosen. This repo ships **two platform shells from one shared core**: an Obsidian plugin (repo root) and a VSCode extension (`vscode-extension/`). See "Shared core vs. platform shells" below for how they coexist, and "VSCode extension" for that shell's own toolchain.
 
 ## Requirements
 
-| Tool | Version | Notes |
-| :--- | :--- | :--- |
-| Node.js | 18 or later recommended | Only needed for development (running `npm`, esbuild, vitest). Not a runtime requirement for the plugin itself — the built `main.js` runs inside Obsidian's own JS engine. Developed/verified with Node v24.11.1. |
-| npm | Bundled with Node.js | Used for dependency management and running scripts. |
-| TypeScript | `^5.4.3` (devDependency, see `package.json`) | Compiled to plain JavaScript by esbuild; `tsc` itself is only used for type-checking (`tsc -noEmit`), not for emitting output. |
-| Obsidian | `minAppVersion: 1.4.0` (see `manifest.json`) | Minimum Obsidian version the plugin declares support for. |
+| Tool | Version | How to get it | Notes |
+| :--- | :--- | :--- | :--- |
+| Node.js | 18 or later recommended | Installer for your OS: [nodejs.org](https://nodejs.org/) | Only needed for development (running `npm`, esbuild, vitest). Not a runtime requirement for the plugin itself — the built `main.js` runs inside Obsidian's own JS engine. Developed/verified with Node v24.11.1. |
+| npm | Bundled with Node.js | Included with the Node.js installer above — no separate install | Used for dependency management and running scripts. |
+| TypeScript | `^5.4.3` (devDependency, see `package.json`) | `npm install` in the repo root (or `vscode-extension/`) pulls it in automatically from `package.json`; no manual/global install needed. Package: [npmjs.com/package/typescript](https://www.npmjs.com/package/typescript) | Compiled to plain JavaScript by esbuild; `tsc` itself is only used for type-checking (`tsc -noEmit`), not for emitting output. |
+| Obsidian | `minAppVersion: 1.4.0` (see `manifest.json`) | App download: [obsidian.md](https://obsidian.md/) | Minimum Obsidian version the plugin declares support for. Only needed to actually run/test the plugin, not to build it. |
+| VSCode | `engines.vscode: ^1.74.0` (see `vscode-extension/package.json`) | App download: [code.visualstudio.com](https://code.visualstudio.com/) | Minimum VSCode version the extension declares support for. Only needed to actually run/test the extension, not to build it. |
 
 ## Language & module system
 
@@ -43,7 +44,7 @@ This document describes the toolchain and libraries used to build and test the F
 
 ## Source layout
 
-```
+```text
 src/
   main.ts                    Plugin entry point (onload, code-block processor, Global config loading)
   types.ts                   Shared type definitions (YAML schema, plugin settings)
@@ -83,3 +84,51 @@ Everything under `src/` is platform-agnostic and shared verbatim (by relative im
 - **esbuild over Rollup/webpack**: it's what Obsidian's own sample plugin and most community plugins use; fast, minimal config, first-class TypeScript support without a separate transpile step.
 - **No UI framework**: the plugin renders a handful of DOM/SVG elements per code block: a framework's overhead (bundle size, runtime) isn't justified, and Obsidian's own `Setting` API already covers the settings UI.
 - **Vitest over Jest**: faster, native ESM/TypeScript support with no extra config, and pairs naturally with esbuild-based projects.
+
+## VSCode extension
+
+`vscode-extension/` is its own npm package (own `package.json`/`tsconfig.json`/`esbuild.config.mjs`), sharing the platform-agnostic modules under the repo-root `src/` (see "Shared core vs. platform shells" above) but otherwise independent — it is not a workspace/monorepo package, just relative imports (`../../src/...`) bundled at build time.
+
+- **Entry point**: `src/extension.ts` — `activate()` registers a markdown-it plugin via VSCode's `extendMarkdownIt` contribution point (`markdown.markdownItPlugins: true` in `package.json`), overriding the ` ```fretboard ` fence renderer for the built-in Markdown preview. There's no editor/webview code beyond that — same "render-only" scope as the Obsidian plugin.
+- **`src/render-fence.ts`**: parse → resolve → `buildFretboardSvg` (shared) → `toSvgString()` (shared, DOM-free serializer — see `render/svg-builder.ts` above). Has zero `vscode` import, so it's unit-testable independent of the extension host. Errors are escaped into a `<pre class="fretboard-error">` block rather than throwing, matching the Obsidian plugin's per-block error handling (CLAUDE.md §5).
+- **`src/settings.ts`**: System settings are just `DEFAULT_SETTINGS` as-is, exposed to the user via VSCode's native settings UI instead of a custom panel — every System-layer key (CLAUDE.md §2.1) is declared under `contributes.configuration` in `package.json`, so VSCode auto-generates the GUI form (`Ctrl+,` → search "Fretboard Renderer"). Global config (`fretboard-renderer.yaml` at the workspace root) reuses the shared `parseVaultConfig` unchanged.
+- **Styling**: `media/fretboard-vscode.css` mirrors the Obsidian plugin's `styles.css` class names, remapped to VSCode's webview theme variables (e.g. `--text-normal` → `--vscode-editor-foreground`). Loaded via `markdown.previewStyles` in `package.json`.
+- **Build**: same esbuild approach as the Obsidian side (`esbuild.config.mjs`), but `platform: "node"`, `target: "node16"`, output `dist/extension.js`, with `vscode` (not `obsidian`) marked `external`. `tsconfig.json` needs `"types": ["obsidian", "node"]` — the shared `render-fretboard.ts` file still contains Obsidian-only code paths (`toDom()`) guarded off at runtime but present for type-checking, so the `obsidian` ambient types must be pulled in even though nothing in `vscode-extension/` imports the package directly; listing `types` explicitly then requires re-adding `"node"` too, since it disables TS's automatic `@types/*` inclusion.
+- **Packaging tool**: **[@vscode/vsce](https://www.npmjs.com/package/@vscode/vsce)** `^2.24.0` (devDependency) — builds and/or uploads the `.vsix`. `npm run package` = `npm run build` (tsc type-check + esbuild production bundle) + `vsce package`.
+- **What's excluded from the package** (`.vscodeignore`): `src/**` (TS source), `.vscode/**`, `node_modules/**`, `tsconfig.json`, `esbuild.config.mjs`, `.gitignore`, `**/*.map`.
+
+### What's inside the `.vsix`
+
+A `.vsix` is a zip; `vsce package`'s own output for this project lists exactly what ships:
+
+```
+extension.vsixmanifest      Marketplace metadata (from package.json)
+[Content_Types].xml
+extension/
+  CHANGELOG.md
+  LICENSE.txt
+  README.md                 ← yes, the same README shown on the Marketplace listing page ships inside the package too
+  package.json
+  dist/
+    extension.js             The one esbuild bundle — shared core + extension.ts + render-fence.ts + settings.ts, all in one file
+  media/
+    fretboard-vscode.css
+    icon.png
+```
+
+No `node_modules/`, no TypeScript sources, no test files — `dist/extension.js` is fully self-contained (everything not marked `external` in `esbuild.config.mjs` is bundled in).
+
+## Release: Obsidian vs. VSCode
+
+The two shells release through unrelated mechanisms — there is no shared release pipeline, and a version bump has to be done separately in each `package.json`/`manifest.json`.
+
+| | Obsidian plugin | VSCode extension |
+| :--- | :--- | :--- |
+| Trigger | `git tag <version>` push | Manual |
+| Pipeline | `.github/workflows/release.yml` (GitHub Actions): `npm ci` → `npm run build` → `npm test` → attest build provenance → `gh release create` | None — no CI step publishes this side |
+| Where it lands | A GitHub Release on this repo, with `main.js`/`manifest.json`/`styles.css` attached | A new version uploaded directly to the [Marketplace publisher page](https://marketplace.visualstudio.com/manage/publishers/hiroshi-watanabe) |
+| Package format | **None** — no archive, no zip, no signing. The "release" is just three loose files (`main.js`, `manifest.json`, `styles.css`) attached individually to the GitHub Release. `main.js` is minified but still plain-text JS, not a compiled binary. | A single signed `.vsix` (a zip; see "What's inside the `.vsix`" above) containing the bundle plus README/CHANGELOG/LICENSE/media |
+| How users install | Community Plugins browse (once/if submitted to `obsidianmd/obsidian-releases` — not done yet), BRAT, or manual copy into `.obsidian/plugins/` — in every case, the installer just fetches those 3 loose files straight from the GitHub Release and drops them in a folder | VSCode's built-in Extensions view / Marketplace search |
+| Auth needed | None beyond a normal `git push` (GitHub Actions uses the repo's own token) | A Microsoft account sign-in to the Marketplace publisher page |
+
+**Why the VSCode side is manual:** `vsce publish` (the command-line path) needs an Azure DevOps Personal Access Token, which requires an Azure DevOps *Organization* to exist first — and creating one led into an unrelated Azure Subscription signup flow that never completed (2026-08-13/14; see the `technical-notes` vault for the full trail: `memo/VscodeExtensionRelease.md`, `memo/ObsidianPluginRelease.md`). The working alternative — build a `.vsix` locally (`npm run package`) and drag-and-drop it into the Marketplace publisher page — needs no PAT, only the Microsoft account sign-in. Until that Azure DevOps org/PAT issue is resolved, releases on this side stay manual: bump `vscode-extension/package.json`'s `version`, run `npm run package`, upload the resulting `.vsix`.

@@ -2,7 +2,7 @@
 
 Render guitar fretboard diagrams — chord shapes, scale boxes, whatever — as SVG, directly in VSCode's built-in Markdown preview. Write a lightweight YAML shorthand in a ` ```fretboard ` fenced code block; the preview renders it as a diagram.
 
-This is the VSCode counterpart to the [Fretboard Renderer Obsidian plugin](https://github.com/hiroshi-watanabe/fretboard-renderer) — same YAML syntax, same rendering engine, shared from the same repository. **This is an early MVP**: static Markdown Preview rendering only. No in-editor autocomplete yet.
+This is the VSCode counterpart to the [Fretboard Renderer Obsidian plugin](https://github.com/hiroshi-watanabe/fretboard-renderer) — same YAML syntax, same rendering engine, shared from the same repository.
 
 ## Example
 
@@ -40,9 +40,14 @@ Settings are layered the same way as the Obsidian plugin (System < Global < Loca
 
 - **Local** (per-diagram override): any key inside a ` ```fretboard ` block itself, same as in Obsidian.
 
+## Autocomplete
+
+Inside a ` ```fretboard ` block, IntelliSense suggests keys and values as you go — same context-aware behavior as the Obsidian plugin (keys before `:`, values after, scoped to `notes`/`boxes`/`barre`/`diagrams` nesting).
+
+VSCode only auto-invokes the suggestion popup on non-word characters, so it appears automatically right after typing `:` or a space. To bring it up anywhere else (e.g. the very first letter of a key), press `Ctrl+Space` (`Cmd+Space` on macOS).
+
 ## Known limitations (MVP)
 
-- No live in-editor autocomplete/IntelliSense while typing YAML.
 - Global config (`fretboard-renderer.yaml`) is re-read on every preview render, not watched for changes independent of the note itself.
 
 ## License

@@ -235,16 +235,6 @@ function drawGrid(svg: VNode, layout: Layout, model: ResolvedModel): void {
 		svgEl("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "fretboard-string-line" }, svg);
 	}
 
-	if (!model.isRelative && model.startFret > 0) {
-		const p = layout.point(-0.35, 0.15);
-		const t = svgEl(
-			"text",
-			{ x: p.x, y: p.y, class: "fretboard-startfret", "text-anchor": "middle" },
-			svg
-		);
-		t.textContent = `${model.startFret}fr`;
-	}
-
 	if (!model.isRelative && model.fretNumbering !== "none") {
 		const start = gridStartFret(model);
 		for (let c = 0; c < model.fretsWidth; c++) {

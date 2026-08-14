@@ -7,6 +7,7 @@ import { parseFretboardBlock } from "./parser/parse";
 import { FretboardParseError } from "./parser/errors";
 import { resolveFretboardModel } from "./model/fretboard-model";
 import { renderFretboard, renderFretboardRow } from "./render/render-fretboard";
+import { FretboardEditorSuggest } from "./completion/obsidian-suggest";
 
 export default class FretboardRendererPlugin extends Plugin {
 	/** System layer: plugin-wide defaults from the Settings UI. */
@@ -18,6 +19,7 @@ export default class FretboardRendererPlugin extends Plugin {
 		await this.loadSettings();
 		await this.loadGlobalConfig();
 		this.addSettingTab(new FretboardSettingTab(this.app, this));
+		this.registerEditorSuggest(new FretboardEditorSuggest(this.app));
 
 		const watchGlobalConfig = (file: TAbstractFile) => {
 			if (file.path === GLOBAL_CONFIG_PATH) void this.loadGlobalConfig();

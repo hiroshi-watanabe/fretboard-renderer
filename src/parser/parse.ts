@@ -17,16 +17,16 @@ import type {
 import { FretboardParseError } from "./errors";
 import { parseRange } from "./range";
 
-const SHAPES: ReadonlySet<string> = new Set(["circle", "square", "triangle", "none"]);
-const BOX_STYLES: ReadonlySet<string> = new Set(["solid", "dashed"]);
-const ORIENTATIONS: ReadonlySet<string> = new Set(["horizontal", "vertical"]);
-const FILL_STYLES: ReadonlySet<string> = new Set(["filled", "outlined"]);
-const NAMING_MODES: ReadonlySet<string> = new Set(["chord", "scale"]);
-const CHORD_SYMBOL_STYLES: ReadonlySet<string> = new Set(["standard", "berklee", "jazz"]);
+export const SHAPES: ReadonlySet<string> = new Set(["circle", "square", "triangle", "none"]);
+export const BOX_STYLES: ReadonlySet<string> = new Set(["solid", "dashed"]);
+export const ORIENTATIONS: ReadonlySet<string> = new Set(["horizontal", "vertical"]);
+export const FILL_STYLES: ReadonlySet<string> = new Set(["filled", "outlined"]);
+export const NAMING_MODES: ReadonlySet<string> = new Set(["chord", "scale"]);
+export const CHORD_SYMBOL_STYLES: ReadonlySet<string> = new Set(["standard", "berklee", "jazz"]);
 const ADJUST_MIN = -5;
 const ADJUST_MAX = 5;
 
-const BLOCK_KEYS: ReadonlySet<string> = new Set([
+export const BLOCK_KEYS: ReadonlySet<string> = new Set([
 	"title",
 	"visible",
 	"startFret",
@@ -45,8 +45,8 @@ const BLOCK_KEYS: ReadonlySet<string> = new Set([
 	"paths",
 	"notes",
 ]);
-const MULTI_KEYS: ReadonlySet<string> = new Set(["diagrams"]);
-const NOTE_KEYS: ReadonlySet<string> = new Set([
+export const MULTI_KEYS: ReadonlySet<string> = new Set(["diagrams"]);
+export const NOTE_KEYS: ReadonlySet<string> = new Set([
 	"s",
 	"f",
 	"label",
@@ -60,8 +60,8 @@ const NOTE_KEYS: ReadonlySet<string> = new Set([
 	"sizeAdjust",
 	"labelSizeAdjust",
 ]);
-const BARRE_KEYS: ReadonlySet<string> = new Set(["fret", "start", "end"]);
-const BOX_KEYS: ReadonlySet<string> = new Set(["frets", "strings", "style"]);
+export const BARRE_KEYS: ReadonlySet<string> = new Set(["fret", "start", "end"]);
+export const BOX_KEYS: ReadonlySet<string> = new Set(["frets", "strings", "style"]);
 
 /** Result of parsing a ```fretboard block: either one diagram, or several to render side by side. */
 export type ParsedFretboardBlock =
