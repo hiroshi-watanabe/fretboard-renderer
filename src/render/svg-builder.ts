@@ -62,7 +62,7 @@ export function svgEl<K extends keyof SVGElementTagNameMap>(
 
 /** Serializes to a real, live SVG element (Obsidian/browser — needs a `document`). */
 export function toDom(node: VNode): SVGElement {
-	const el = document.createElementNS(SVG_NS, node.tag) as SVGElement;
+	const el = document.createElementNS(SVG_NS, node.tag);
 	for (const [key, value] of Object.entries(node.attrs)) {
 		el.setAttribute(key, String(value));
 	}

@@ -100,7 +100,10 @@ export const TITLE_NORMAL_END = "";
 
 /** Strips the invisible typography markers, leaving the plain, human-readable title. */
 export function stripTitleMarkers(text: string): string {
-	return text.replace(/[-]/g, "");
+	// U+0001..U+0004 are this module's own invisible TITLE_* sentinel markers (see above),
+	// not malformed/untrusted input.
+	// eslint-disable-next-line no-control-regex -- see above
+	return text.replace(/[\u0001-\u0004]/g, "");
 }
 
 function raise(text: string): string {
@@ -363,6 +366,10 @@ export function inferChordSuffix(
 				base = `${tokens.majorSeventh}sus4`;
 			} else if (hasMinor7) {
 				base = has6 ? "13sus4" : has2 ? "9sus4" : "7sus4";
+			} else if (has6) {
+				// No 7th, so the 6th can't fold into a tension number the way it does
+				// above — it's the chord's own added-6 quality, sitting alongside sus4.
+				base = "6sus4";
 			} else {
 				base = "sus4";
 			}
@@ -373,6 +380,10 @@ export function inferChordSuffix(
 				base = `${tokens.majorSeventh}sus2`;
 			} else if (hasMinor7) {
 				base = "7sus2";
+			} else if (has6) {
+				// Same reasoning as the sus4/has6 case just above: no 7th to fold the 6th
+				// into, so it's named as its own added-6 quality alongside sus2.
+				base = "6sus2";
 			} else {
 				base = "sus2";
 			}
@@ -380,6 +391,12 @@ export function inferChordSuffix(
 			base = tokens.majorSeventh;
 		} else if (hasMinor7) {
 			base = "7";
+		} else if (has6 && omitNotation) {
+			// With omitNotation on, "omit3" below already spells out "the 3rd's role is
+			// unfilled" — so the base can lead with the 6th itself ("6(omit3)") rather
+			// than parenthesizing the 6th as an add-on to a "5" that's already flagged
+			// as missing its 3rd.
+			base = "6";
 		} else if (omitNotation) {
 			base = "";
 		} else {
@@ -392,6 +409,14 @@ export function inferChordSuffix(
 		if (hasFlatThirteen) extras.push("b13");
 		if (hasFlat5) extras.push("b5");
 		suffix = appendExtras(base, extras, style);
+
+		// A bare 6th with no 3rd, no sus substitute, no 7th, and omitNotation off: the
+		// missing 3rd goes unflagged (as any plain "5" power chord does when omitNotation
+		// is off), so the 6th reads as an addition on top of that "5" rather than a "6"
+		// chord missing its 3rd — hence "5(add6)", not "6".
+		if (has6 && !omitNotation && !has4 && !has2 && !hasMajor7 && !hasMinor7) {
+			suffix += raise("(add6)");
+		}
 
 		const omitMarkers: string[] = [];
 		if (omitNotation && !has4 && !has2) omitMarkers.push("omit3");

@@ -100,6 +100,24 @@ describe("inferChordSuffix", () => {
 		});
 	});
 
+	describe("a 6th with no 3rd and no 7th (never silently dropped, folded like sus4/sus2 above)", () => {
+		it("folds a bare 6th + sus2 into 6sus2 (the reported Csus2 regression)", () => {
+			expect(suffix(new Set(["1", "2", "5", "6"]))).toBe("6sus2");
+		});
+
+		it("folds a bare 6th + sus4 into 6sus4", () => {
+			expect(suffix(new Set(["1", "4", "5", "6"]))).toBe("6sus4");
+		});
+
+		it("shows 5(add6) when no 3rd, no sus substitute, and no 7th is present with omitNotation off", () => {
+			expect(suffix(new Set(["1", "5", "6"]))).toBe("5(add6)");
+		});
+
+		it("shows 6(omit3) instead of 5(add6) when omitNotation is on", () => {
+			expect(suffix(new Set(["1", "5", "6"]), "standard", undefined, true)).toBe("6(omit3)");
+		});
+	});
+
 	it("names a fully diminished 7th (b5 + the enharmonic bb7)", () => {
 		expect(suffix(new Set(["1", "m3", "b5", "6"]))).toBe("dim7");
 	});

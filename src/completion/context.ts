@@ -141,7 +141,7 @@ export function resolveCompletionContext(blockText: string, offsetInBlock: numbe
 					.length;
 				arrayKey = lastArrayKey !== null && lineIndent > lastArrayIndent ? lastArrayKey : null;
 			}
-			stack.push({ bracket: ch as "{" | "[", arrayKey });
+			stack.push({ bracket: ch, arrayKey });
 			segmentStart = idx + 1;
 			continue;
 		}

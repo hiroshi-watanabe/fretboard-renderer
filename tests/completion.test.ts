@@ -41,6 +41,8 @@ describe("getFretboardCompletions — top-level keys", () => {
 		const { fullText, offset } = fenced("orient|");
 		const result = getFretboardCompletions(fullText, offset)!;
 		expect(result.items).toEqual([
+			// vitest's own expect.any() is typed `any`; this is the standard idiom for "some string here".
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- see above
 			expect.objectContaining({ value: "orientation", isKey: true, detail: expect.any(String) }),
 		]);
 	});
