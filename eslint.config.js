@@ -1,6 +1,9 @@
 import obsidianmd from "eslint-plugin-obsidianmd";
 import { globalIgnores, defineConfig } from "eslint/config";
 
+/** @type {string} */
+const tsconfigRootDir = import.meta.dirname;
+
 export default defineConfig(
 	globalIgnores([
 		"node_modules",
@@ -19,7 +22,7 @@ export default defineConfig(
 				projectService: {
 					allowDefaultProject: ["eslint.config.js"],
 				},
-				tsconfigRootDir: import.meta.dirname,
+				tsconfigRootDir,
 			},
 		},
 	},
