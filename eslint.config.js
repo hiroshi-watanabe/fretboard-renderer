@@ -12,13 +12,6 @@ export default defineConfig(
 		"package-lock.json",
 		"tsconfig.json",
 		"esbuild.config.mjs",
-		"vitest.config.ts",
-		// A separate, unrelated VSCode-extension project lives alongside the Obsidian
-		// plugin in this repo (its own package.json/tsconfig/@types-vscode, published
-		// independently to the VSCode Marketplace) — it isn't part of the shipped
-		// Obsidian plugin, so Obsidian-specific rules (e.g. guarding node:fs for
-		// mobile) don't apply to it.
-		"vscode-extension",
 	]),
 	{
 		languageOptions: {

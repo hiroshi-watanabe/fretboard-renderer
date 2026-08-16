@@ -1,5 +1,5 @@
 import { App, PluginSettingTab, Setting, type SettingDefinitionGroup } from "obsidian";
-import type { FretboardPluginSettings } from "../types";
+import type { FretboardPluginSettings } from "fretboard-renderer-core";
 import type FretboardRendererPlugin from "../main";
 
 type SettingKey = keyof FretboardPluginSettings;

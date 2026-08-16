@@ -1,5 +1,5 @@
 import { App, Editor, EditorPosition, EditorSuggest, EditorSuggestContext, EditorSuggestTriggerInfo, TFile } from "obsidian";
-import { getFretboardCompletions, type CompletionCandidate } from "./context";
+import { getFretboardCompletions, type CompletionCandidate } from "fretboard-renderer-core";
 
 /**
  * Context-aware key/value autocomplete inside ```fretboard code blocks. `onTrigger` and

@@ -7,15 +7,13 @@
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-		"test": "vitest run",
-		"test:watch": "vitest",
 		"lint": "eslint ."
 	},
 	"keywords": ["obsidian-plugin", "guitar", "fretboard", "music-theory"],
 	"author": "Hiroshi Watanabe",
 	"license": "MIT",
 	"dependencies": {
-		"yaml": "^2.4.1"
+		"fretboard-renderer-core": "^0.1.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.30.1",
@@ -27,7 +25,6 @@
 		"obsidian": "latest",
 		"tslib": "2.6.2",
 		"typescript": "^5.4.3",
-		"typescript-eslint": "^8.35.1",
-		"vitest": "^1.4.0"
+		"typescript-eslint": "^8.35.1"
 	}
 }

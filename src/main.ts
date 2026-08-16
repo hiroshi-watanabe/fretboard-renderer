@@ -1,11 +1,14 @@
 import { Notice, Plugin, TAbstractFile } from "obsidian";
-import type { FretboardPluginSettings } from "./types";
-import { DEFAULT_SETTINGS } from "./settings/settings";
+import {
+	type FretboardPluginSettings,
+	DEFAULT_SETTINGS,
+	GLOBAL_CONFIG_PATH,
+	parseVaultConfig,
+	parseFretboardBlock,
+	FretboardParseError,
+	resolveFretboardModel,
+} from "fretboard-renderer-core";
 import { FretboardSettingTab } from "./settings/settings-tab";
-import { GLOBAL_CONFIG_PATH, parseVaultConfig } from "./settings/vault-config";
-import { parseFretboardBlock } from "./parser/parse";
-import { FretboardParseError } from "./parser/errors";
-import { resolveFretboardModel } from "./model/fretboard-model";
 import { renderFretboard, renderFretboardRow } from "./render/obsidian-render";
 import { FretboardEditorSuggest } from "./completion/obsidian-suggest";
 

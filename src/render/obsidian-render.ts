@@ -1,6 +1,4 @@
-import type { ResolvedModel } from "../model/fretboard-model";
-import { toDom } from "./svg-builder";
-import { buildFretboardSvg } from "./render-fretboard";
+import { toDom, buildFretboardSvg, type ResolvedModel } from "fretboard-renderer-core";
 
 /** Renders a single diagram, replacing the container's contents with its SVG. Obsidian-only
  *  entry point (uses Obsidian's `HTMLElement.empty()`) — a platform rendering straight to a
