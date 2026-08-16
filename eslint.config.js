@@ -1,9 +1,6 @@
 import obsidianmd from "eslint-plugin-obsidianmd";
 import { globalIgnores, defineConfig } from "eslint/config";
 
-/** @type {string} */
-const tsconfigRootDir = import.meta.dirname;
-
 export default defineConfig(
 	globalIgnores([
 		"node_modules",
@@ -22,7 +19,13 @@ export default defineConfig(
 				projectService: {
 					allowDefaultProject: ["eslint.config.js"],
 				},
-				tsconfigRootDir,
+				// tsconfigRootDir omitted — defaults to process.cwd(), which is already
+				// the repo root for every way this runs (npm script, CI, the bot's own
+				// scan). Explicitly assigning it from import.meta.dirname is what
+				// triggered no-unsafe-assignment: that property only types as `string`
+				// (not `any`) when @types/node's ambient ImportMeta augmentation is
+				// available, which isn't guaranteed in every environment that lints
+				// this file — better to just not assign it at all.
 			},
 		},
 	},
