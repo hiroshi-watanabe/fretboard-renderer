@@ -364,10 +364,9 @@ diagrams:
 npm install      # 依存関係のインストール
 npm run dev       # esbuildのウォッチビルド（開発中はこれを起動しておく）
 npm run build     # 型チェック + 本番ビルド（main.js を生成）
-npm test          # vitestによる単体テスト
 ```
 
-詳しいツールチェイン・依存関係・ソース構成は[doc/TECH_STACK.md](doc/TECH_STACK.md)（英語）を参照してください。
+パース・描画・音楽理論のコアロジックとそのテストスイートは別パッケージ [fretboard-renderer-core](https://github.com/hiroshi-watanabe/fretboard-renderer-core) に切り出されており、このリポジトリはそれを利用する側です。詳しいツールチェイン・依存関係・ソース構成は[doc/TECH_STACK.md](doc/TECH_STACK.md)（英語）を参照してください。
 
 ## ライセンス
 

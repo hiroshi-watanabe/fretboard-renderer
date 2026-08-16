@@ -366,10 +366,9 @@ diagrams:
 npm install    # install dependencies
 npm run dev    # esbuild watch build (keep this running while developing)
 npm run build  # type-check + production build (produces main.js)
-npm test       # unit tests via vitest
 ```
 
-See [doc/TECH_STACK.md](doc/TECH_STACK.md) for the toolchain, dependencies, and source layout.
+The parsing/rendering/music-theory core (and its test suite) lives in a separate package, [fretboard-renderer-core](https://github.com/hiroshi-watanabe/fretboard-renderer-core) — this repo just consumes it. See [doc/TECH_STACK.md](doc/TECH_STACK.md) for the toolchain, dependencies, and source layout.
 
 ## License
 
