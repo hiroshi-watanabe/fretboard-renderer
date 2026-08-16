@@ -6,7 +6,7 @@ import { GLOBAL_CONFIG_PATH, parseVaultConfig } from "./settings/vault-config";
 import { parseFretboardBlock } from "./parser/parse";
 import { FretboardParseError } from "./parser/errors";
 import { resolveFretboardModel } from "./model/fretboard-model";
-import { renderFretboard, renderFretboardRow } from "./render/render-fretboard";
+import { renderFretboard, renderFretboardRow } from "./render/obsidian-render";
 import { FretboardEditorSuggest } from "./completion/obsidian-suggest";
 
 export default class FretboardRendererPlugin extends Plugin {
