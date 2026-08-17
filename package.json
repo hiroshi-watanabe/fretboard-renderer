@@ -1,6 +1,6 @@
 {
 	"name": "fretboard-renderer",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced code blocks.",
 	"main": "main.js",
 	"type": "module",
@@ -9,11 +9,16 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"lint": "eslint ."
 	},
-	"keywords": ["obsidian-plugin", "guitar", "fretboard", "music-theory"],
+	"keywords": [
+		"obsidian-plugin",
+		"guitar",
+		"fretboard",
+		"music-theory"
+	],
 	"author": "Hiroshi Watanabe",
 	"license": "MIT",
 	"dependencies": {
-		"fretboard-renderer-core": "^0.1.0"
+		"fretboard-renderer-core": "^0.2.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.30.1",
