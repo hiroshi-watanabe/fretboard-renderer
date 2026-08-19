@@ -18,7 +18,7 @@
 	"author": "Hiroshi Watanabe",
 	"license": "MIT",
 	"dependencies": {
-		"fretboard-renderer-core": "^0.2.0"
+		"fretboard-renderer-core": "^0.3.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.30.1",

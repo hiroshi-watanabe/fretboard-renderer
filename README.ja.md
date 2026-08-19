@@ -48,6 +48,9 @@ notes:
 ### 正確なコード名: sus・add・テンション・分数コード
 自動生成タイトルは、ルート音と基本クオリティだけでなく実際のコード理論に基づいて推定します: 3度が無いときは`sus2`/`sus4`/パワーコード、7度が無いときは`add9`/`add11`、ドミナント7thでテンションが`7`を置き換える折りたたみ表記（`C9`, `C11`, `C13`）と`maj7`/`m7`にカッコで追加するテンション表記（`Cmaj7(9)`）の使い分け、`6`/`6/9`、そして最低音がルートでない場合の`/ベース音`表記（`Cmaj7/E`、相対モードなら`□m7/bVII`）まで対応します。表記の流儀そのものは、ポップス標準の**Standard**・理論重視の**Berklee**・Real Book形式の**Jazz**の3種類から**Chord symbol style**（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`chordSymbolStyle`）で切り替えられます。詳しいルールは[Chord symbol style（コード表記スタイル）と高度なコード名推定](#chord-symbol-styleコード表記スタイルと高度なコード名推定)を参照してください。
 
+### キーを基準に分析する（ローマ数字の度数表記）
+`key: C`を指定し、**Root notation**を`degree`に切り替えると（設定画面、`fretboard-renderer.yaml`、またはブロック単位で`rootNotation: degree`）、タイトルのルート音（および分数コードのベース音）を実音名の代わりにそのキーからのローマ数字の度数で表記できます。例えば`key: C`のとき`Bm7(b5)`は`VIIm7(b5)`（vii°）になります。スケールのタイトルにも適用され、`VII Locrian`のように表記できます。`rootNotation`がデフォルトの`absolute`のままでも、`key`を指定するだけで図の左上に小さく「Key: C」ラベルが表示されます。詳しいルールは[Degree Name表記（keyを基準としたローマ数字）](#degree-name表記keyを基準としたローマ数字)を参照してください。
+
 ### 複数の図を横に並べる
 `diagrams:`を使うと、Cmaj7 → Dm7 → G7のようなコード進行を、Obsidianのブロックレイアウトに邪魔されずに1つのブロック内で横並びにできます:
 
@@ -113,6 +116,7 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Chord symbol style | `standard` / `berklee` / `jazz`、[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | `standard` |
 | Omit notation | オン/オフ。理論上期待される構成音の省略を明示する（例: `C(omit3)`, `G7(omit3)`, `(omit5)`）。デフォルトはオフ（ギターでは5度の省略が非常に多く、常に表示すると煩雑になるため）。[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | オフ |
 | Show inversions | オン/オフ。単なる転回形（コード自体の3度・5度・7度が最低音に来ているだけ、例: `C/E`）の場合にスラッシュ表記を表示するか。デフォルトはオフ（実際のコード譜では転回形をあえて明示しないパターンの方が多いため）。[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | オフ |
+| Root notation | `absolute`（実音名） / `degree`（図の`key`を基準としたローマ数字の度数）、[下記参照](#degree-name表記keyを基準としたローマ数字) | `absolute` |
 | Default shape | `circle` / `square` / `triangle` / `none`（枠なし、ラベルのみ。[下記参照](#notes必須)） | `circle` |
 | Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `outlined` |
 | Nut style | `thick`（太線） / `double`（二重線） | `thick` |
@@ -126,7 +130,7 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 
 #### Global（Vault共通のYAML設定ファイル）
 
-Vaultの**ルートディレクトリ**（`.obsidian/`の中ではない）に **`fretboard-renderer.yaml`** というファイルを作ると、Systemの値をVault単位で上書きできます。指定できるキーはSystemの表と同じです。
+Vaultの**ルートディレクトリ**（`.obsidian/`の中ではない）に **`fretboard-renderer.yaml`** というファイルを作ると、Systemの値をVault単位で上書きできます。指定できるキーはSystemの表と同じです（`key`はLocal限定のオプションのため対象外——曲によってキーは変わる/転調するのが普通で、Vault共通のデフォルトにはそぐわないため）。
 
 ```yaml
 # Vaultルート/fretboard-renderer.yaml
@@ -205,13 +209,16 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 | `chordSymbolStyle` | `standard` / `berklee` / `jazz` | この図の自動生成タイトルだけ[Chord symbol style](#chord-symbol-styleコード表記スタイルと高度なコード名推定)を上書き |
 | `omitNotation` | Boolean | この図の自動生成タイトルだけOmit notationを上書き。[Chord symbol style](#chord-symbol-styleコード表記スタイルと高度なコード名推定)参照 |
 | `showInversions` | Boolean | この図の自動生成タイトルだけShow inversionsを上書き。[Chord symbol style](#chord-symbol-styleコード表記スタイルと高度なコード名推定)参照 |
+| `rootNotation` | `absolute` / `degree` | この図の自動生成タイトルだけRoot notationを上書き。[Degree Name表記](#degree-name表記keyを基準としたローマ数字)参照 |
+| `key` | String | この図が分析の基準とするトニック音名（例: `"C"`, `"F#"`）。Local限定。`rootNotation: degree`を機能させ、「Key: X」ラベルを表示する。[Degree Name表記](#degree-name表記keyを基準としたローマ数字)参照 |
 | `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う |
 | `fretSpacingAdjust` | 整数 -5〜5 | フレット間隔（px）への微調整。`size`より先に加算される |
 | `stringSpacingAdjust` | 整数 -5〜5 | 弦間隔（px）への微調整。`size`より先に加算される |
 | `visible` | String | 描画する弦の範囲。例: `"1-4"` |
 | `barre` | Array | `{fret, start, end}` でセーハ（バレー）を描画 |
-| `boxes` | Array | `{frets: "5-8", strings: "1-6", style: "dashed"}` でスケールポジション等を枠で囲む |
-| `paths` | Array | `[[6,5],[6,8],[5,5]]` のようにドット同士を線で結ぶ |
+| `boxes` | Array | 領域を枠で囲む。矩形形式`{frets: "5-8", strings: "1-6", style: "dashed"}`か、多角形形式`{points: [[6,5],[3,5],[3,8],[6,8]], style: "dashed"}`（3点以上の`[string, fret]`座標、三角形以上）のどちらか（`frets`/`strings`とは排他）。両形式とも`color`と`fill: true`（固定の低い不透明度での塗りつぶし）に対応。[下記参照](#多角形box-points-fill-color) |
+| `paths` | Array | ドット同士を線で結ぶ。省略記法`[[6,5],[6,8],[5,5]]`（実線・デフォルト色）か、`{points: [[6,5],[6,8]], style: "dashed", color: "red"}`のように個別にstyle/colorを指定できるオブジェクト形式。`style`は`solid`（デフォルト） / `dashed` / `thick`（バレー記号と同じ太さ・不透明度。斜めのバレーや、ドットのまとまりの強調に使う）。[下記参照](#ドット同士を結ぶ線-styleとcolor) |
+| `stringNotes` | Array | `{s, label?, shape?, ghost?, class?, color?, fillStyle?, sizeAdjust?, labelSizeAdjust?}` — 特定のフレットではなく弦そのものに紐づく注記を、グリッドの外側の末端（Horizontal Orientationでは右側、Verticalでは下側）に描画する。`notes`と同じ形・スタイルの語彙とデフォルト値を使う。[下記参照](#弦ごとの注記stringnotes) |
 
 `size` / `fretSpacingAdjust` / `stringSpacingAdjust`（図全体）と、各`notes`エントリの`sizeAdjust` / `labelSizeAdjust`（音1つだけ）は、プラグインの `styles.css` を直接編集する代わりに、ノート側から見た目を微調整するための機能です。ユーザーが本体のCSSファイルを触ることは想定していません。細かい色調整も同様に、CSSではなく各`notes`エントリの`color`で行います。
 
@@ -289,6 +296,28 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 
 設定画面、Vault共通の`fretboard-renderer.yaml`、またはブロックごとに`chordSymbolStyle: jazz`のように指定して切り替えられます。
 
+### Degree Name表記（keyを基準としたローマ数字）
+
+**Root notation**（デフォルト`absolute`、または`degree`）は、自動生成タイトルのルート音（および分数コードのベース音があればそれも）を、コードの機能分析（例:「Cメジャーにおけるvii°」）やモーダルなスケール分析（「Cメジャーの第7モード＝B Locrian」）向けに表記する仕組みです。これは相対/movableモードの図が既に持っているローマ数字のスラッシュ・ベース表記（`□m7/bVII`、あくまでその図**自身のRoot**が基準）とは別の仕組みです。Degree Name表記はユーザーが明示的に指定した`key`を基準とし、絶対モードの図でも機能します。
+
+- **`key`**（Local限定のYAMLフィールド。例: `key: "C"`, `key: "F#"`）: この図が分析の基準とするトニック。指定するだけで、`rootNotation`の値に関わらず図の左上に小さく「Key: C」ラベルが表示される。
+- **`rootNotation: degree`**が実際にルートをローマ数字（`I, bII, II, bIII, III, IV, bV, V, bVI, VI, bVII, VII`。相対モードのスラッシュ・ベースと同じ表）で表記するのは、`rootNotation`が`degree`であること・その図に`key`が設定されていること・その図が**絶対モード**であることの**すべて**を満たす場合のみ。相対/movableモードの図は実際に鳴っている絶対ピッチ自体が確定しないため、`key`/`rootNotation`の値に関わらず常に`□`にフォールバックする。他の条件のいずれかが欠けている場合も実音名にフォールバックする。
+- 分数コードのベース音も同じ考え方で表記される — コード自身のRootからではなく`key`を基準としたローマ数字になるため、タイトル全体が一貫してkey基準になる（例: `VIIm7(b5)/I`、ベースがキーのトニック自身の場合）。
+- `namingMode: scale`のタイトルにも適用される: `key: C`＋B Locrianの形は、`B Locrian`ではなく`VII Locrian`と表記される。
+
+```fretboard
+key: "C"
+rootNotation: degree
+startFret: 0
+notes:
+  - {s: 2, f: 0, label: root}
+  - {s: 4, f: 0}
+  - {s: 1, f: 1}
+  - {s: 5, f: 0}
+```
+
+これは`Key: C`ラベル付きで`VIIm7(b5)`とレンダリングされます — `key`/`rootNotation`を指定しない同じ形は`Bm7(b5)`になります。
+
 ### 仮想ノート
 
 `G7(#9, b13)`のようなオルタード・ドミナントコードは、Rootを省略して弾かれることが非常によくあります — 押弦が難しく、テンションノートの方が色彩を担うためです。しかし度数計算のためには、Rootをどこかに指定する必要があります。音に`virtual: true`を付けると、その音は実際に押弦・発音される音として扱われなくなります — 図形（ドット）は一切描画されず、そのフレット位置に算出済みラベルが丸括弧付きで表示されるだけです（例: 仮想Rootなら`(R)`、仮想5度なら`(5)`）。それでいて度数・コード名の計算には、通常の音と全く同じように寄与します:
@@ -310,6 +339,69 @@ notes:
 - 「最も低く鳴っている音」（分数コードのベース音判定）からは除外される。
 - グリッドのサイズ計算（`frets`の自動拡張、`visible`など）には通常の音と同様に関与する。
 - オブジェクト形式（`{s: ..., f: ..., virtual: true}`）でのみ指定可能 — 配列の省略記法には含まれない。
+
+### 多角形box: points, fill, color
+
+`boxes`は互いに排他な2つの形式に対応しています——従来の矩形（`frets`/`strings`）か、3点以上の`[string, fret]`座標を頂点とする多角形`points`（三角形から任意の形まで）か:
+
+```fretboard
+visible: 1-6
+boxes:
+  - points: [[1, 1], [3, 1], [3, 3], [6, 3], [6, 6], [1, 6]]
+    style: dashed
+notes:
+  - {s: 6, f: 1, label: root}
+  - [3, 3]
+  - [1, 6]
+```
+
+`points`の座標系は`paths`の`points`と全く同じです——`notes`と同じ実フレット位置基準ですが、整数だけでなく任意の数値を許容するため、例えば`4.5`はフレット4と5の境界線上にきっちり乗ります。これにより`points`は矩形形式の完全な上位互換になります: `{frets: "1-4", strings: "2-5"}`は`{points: [[1.5, 0.5], [5.5, 0.5], [5.5, 4.5], [1.5, 4.5]]}`として全く同じ形を再現できます。
+
+どちらの形式も以下に対応します:
+- **`color`**: 枠線の色を上書きする。`fill`指定時は塗りの色にもなる。
+- **`fill`**: `true`/`false`（デフォルト`false`、従来通り）。`true`にすると固定の低い不透明度で塗りつぶす——半透明のハイライトであり、下の音やグリッドを覆い隠す不透明な塊にはならない。
+
+矩形・多角形を問わず、すべてのboxは鋭角ではなく、わずかに丸みを帯びたコーナー（凹んだ角、例えばL字型の内側の角も含む）で描画されるようになりました。これは設定で変更できません。
+
+### ドット同士を結ぶ線: styleとcolor
+
+`paths`の各要素は、従来通りの`[string, fret]`座標配列の省略記法（実線・デフォルト色）か、`points`に座標配列を渡しつつ`style`/`color`を個別指定できるオブジェクト形式のどちらかで書けます:
+
+- **`style`**: `solid`（デフォルト） / `dashed`（点線） / `thick`（バレー記号と同じ太さ・不透明度の実線。斜めのバレーを表現したい場合や、複数のドットのまとまりを1組として強調したい場合に使う）。
+- **`color`**: この線1本だけのストロークの色をCSS色文字列で上書きする（ノートの`color`と同じ規約）。`style`とは独立に指定できる。
+
+```fretboard
+visible: 3-6
+notes:
+  - {s: 6, f: 1, label: root}
+  - [5, 3]
+  - [4, 3]
+  - [3, 1]
+paths:
+  - {points: [[6, 1], [3, 1]], style: thick}
+  - {points: [[5, 3], [4, 3]], style: dashed, color: red}
+```
+
+### 弦ごとの注記（`stringNotes`）
+
+特定のフレットではなく**弦そのもの**に紐づく注記を、グリッドの外側の末端に描画します——Horizontal Orientationではグリッドの右側、Verticalでは下側（開放弦/ミュート弦のヘッダーレーンと、ちょうど反対側）:
+
+```fretboard
+startFret: 10
+visible: 3-6
+notes:
+  - {s: 6, f: 10, finger: 1}
+  - {s: 5, f: 12, finger: 4}
+  - {s: 4, f: 11, finger: 2}
+  - {s: 3, f: 12, finger: 3}
+stringNotes:
+  - {s: 5, label: "4"}
+  - {s: 3, label: "3"}
+```
+
+各要素は`s`（必須）に加え、`notes`と全く同じ形・スタイルの語彙——`label`, `shape`, `ghost`, `class`, `color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust`——を持ち、同じSystem/Globalのデフォルト値を使うため、図の他の部分と見た目が一貫します。`notes`と違い`f`（フレット/ピッチに紐づかない）が無いため、自動計算されるラベル（`root`概念）も無く、`finger`フィールドも無い（この機能自体の`label`がすでにその役割を果たすため、例: `label: "4"`）。オブジェクト形式のみ——`barre`/`boxes`と同じ理由で、1つの図に数個程度しか置かない想定のため配列の省略記法は用意していません。
+
+さしあたっての用途はバレーコードの主要な形ではカバーしきれない指番号の手動配置ですが、意図的に汎用的な設計にしてあります——弦ごとの短いラベルや形であれば何でも構いません。将来的な自動指番号機能の出力先となることも見込んだ布石でもあります。
 
 ### 複数の図を横に並べる（`diagrams`）
 

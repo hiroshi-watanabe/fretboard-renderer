@@ -22,6 +22,11 @@
 	fill: var(--text-normal);
 }
 
+.fretboard-key-label {
+	font-size: 10px;
+	fill: var(--text-muted);
+}
+
 .fretboard-fret-line,
 .fretboard-string-line {
 	stroke: var(--background-modifier-border);
@@ -49,6 +54,11 @@
 	stroke-width: 1.25;
 }
 
+.fretboard-box.is-filled {
+	fill: var(--text-muted);
+	fill-opacity: 0.15;
+}
+
 .fretboard-barre {
 	stroke: var(--text-muted);
 	opacity: 0.55;
@@ -58,6 +68,10 @@
 	fill: none;
 	stroke: var(--text-muted);
 	stroke-width: 1.5;
+}
+
+.fretboard-path.is-thick {
+	opacity: 0.55;
 }
 
 .fretboard-shape {

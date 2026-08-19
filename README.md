@@ -48,6 +48,9 @@ By default the auto-generated title names a chord/arpeggio (e.g. `Am7add11`) —
 ### Accurate chord names: sus, add, tensions, slash chords
 The auto-generated title infers real chord theory, not just root + basic quality: `sus2`/`sus4`/power chords when there's no 3rd, `add9`/`add11` when there's no 7th, folded dominant tensions (`C9`, `C11`, `C13`) vs. parenthesized ones on `maj7`/`m7` (`Cmaj7(9)`), `6`/`6/9`, and a `/bass` suffix when the lowest-sounding note isn't the root (`Cmaj7/E`, or `□m7/bVII` in relative mode). Switch the notation itself — pop **Standard**, **Berklee**, or **Jazz** (Real Book) — with **Chord symbol style** (Settings, `fretboard-renderer.yaml`, or `chordSymbolStyle` on one diagram). See [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) for the full rules.
 
+### Analyze against a key (Roman-numeral degree names)
+Set `key: C` and switch **Root notation** to `degree` (Settings, `fretboard-renderer.yaml`, or `rootNotation: degree` on one diagram) to spell a title's root — and slash bass, if any — as a Roman-numeral scale degree relative to that key instead of a real letter name, e.g. `Bm7(b5)` becomes `VIIm7(b5)` for `key: C` (the vii° chord). Works for scale titles too (`VII Locrian`). Setting `key` alone, even with the default `absolute` notation, still draws a small "Key: C" label in the diagram's top-left corner. See [Degree Name root notation](#degree-name-root-notation-key-relative-roman-numerals) for the full rules.
+
 ### Multiple diagrams side by side
 Use `diagrams:` to lay out several charts in one block — handy for a progression like Cmaj7 → Dm7 → G7 — without fighting Obsidian's block layout:
 
@@ -113,6 +116,7 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Chord symbol style | `standard` / `berklee` / `jazz`, see [below](#chord-symbol-style--advanced-inference) | `standard` |
 | Omit notation | On/off toggle — marks a chord missing an expected tone, e.g. `C(omit3)`, `G7(omit3)`, `(omit5)`. Off by default (guitarists very commonly omit the 5th — marking every such chord would be noisy). See [below](#chord-symbol-style--advanced-inference) | Off |
 | Show inversions | On/off toggle — shows the slash bass when it's just an inversion (the chord's own 3rd, 5th, or 7th as the lowest note, e.g. `C/E`). Off by default (real-world chord charts very often skip notating this). See [below](#chord-symbol-style--advanced-inference) | Off |
+| Root notation | `absolute` (real letter name) / `degree` (Roman-numeral scale degree relative to a per-diagram `key`), see [below](#degree-name-root-notation-key-relative-roman-numerals) | `absolute` |
 | Default shape | `circle` / `square` / `triangle` / `none` (no outline, label only — see [below](#notes-required)) | `circle` |
 | Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
@@ -126,7 +130,7 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 
 #### Global (vault-wide YAML config file)
 
-Create a file named **`fretboard-renderer.yaml`** at the vault's **root** (not inside `.obsidian/`) to override System values for the whole vault. It accepts the same keys as the System table above.
+Create a file named **`fretboard-renderer.yaml`** at the vault's **root** (not inside `.obsidian/`) to override System values for the whole vault. It accepts the same keys as the System table above (`key` is Local-only, since a diagram's key is a per-diagram fact — songs modulate — not a sensible vault-wide default).
 
 ```yaml
 # <vault root>/fretboard-renderer.yaml
@@ -205,13 +209,16 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 | `chordSymbolStyle` | `standard` / `berklee` / `jazz` | Overrides [Chord symbol style](#chord-symbol-style--advanced-inference) for this diagram's auto-generated title only |
 | `omitNotation` | Boolean | Overrides Omit notation for this diagram's auto-generated title only — see [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) |
 | `showInversions` | Boolean | Overrides Show inversions for this diagram's auto-generated title only — see [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) |
+| `rootNotation` | `absolute` / `degree` | Overrides Root notation for this diagram's auto-generated title only — see [Degree Name root notation](#degree-name-root-notation-key-relative-roman-numerals) |
+| `key` | String | Tonic note name (e.g. `"C"`, `"F#"`) this diagram is analyzed against. Local-only. Enables `rootNotation: degree` and draws a "Key: X" label — see [Degree Name root notation](#degree-name-root-notation-key-relative-roman-numerals) |
 | `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
 | `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |
 | `stringSpacingAdjust` | Integer -5..5 | Pixel nudge to string spacing, applied before `size` |
 | `visible` | String | Range of strings to draw, e.g. `"1-4"` |
 | `barre` | Array | `{fret, start, end}` — draws a barre marker |
-| `boxes` | Array | `{frets: "5-8", strings: "1-6", style: "dashed"}` — outlines a scale position or similar |
-| `paths` | Array | `[[6,5],[6,8],[5,5]]` — connects dots with a line |
+| `boxes` | Array | Outlines a region. Either the rectangle form `{frets: "5-8", strings: "1-6", style: "dashed"}`, or a polygon `{points: [[6,5],[3,5],[3,8],[6,8]], style: "dashed"}` (3+ `[string, fret]` pairs — triangle and up), mutually exclusive with `frets`/`strings`. Both forms accept `color` and `fill: true` (fixed low-opacity fill) — see [below](#polygon-boxes-points-fill-and-color) |
+| `paths` | Array | Connects dots with a line. Either the bare shorthand `[[6,5],[6,8],[5,5]]` (solid, default color), or `{points: [[6,5],[6,8]], style: "dashed", color: "red"}` for a styled/colored path — `style` is `solid` (default) / `dashed` / `thick` (barre-weight, for a diagonal barre or to emphasize a group of dots), see [below](#dot-to-dot-paths-style-and-color) |
+| `stringNotes` | Array | `{s, label?, shape?, ghost?, class?, color?, fillStyle?, sizeAdjust?, labelSizeAdjust?}` — a per-string annotation drawn outside the grid's trailing edge (right of the grid in horizontal orientation, below it in vertical), not tied to any fret. Same shape/style vocabulary and defaults as a note. See [below](#per-string-annotations-stringnotes) |
 
 `size` / `fretSpacingAdjust` / `stringSpacingAdjust` (whole diagram) and each note's `sizeAdjust` / `labelSizeAdjust` exist so you can fine-tune appearance from a note's YAML instead of editing the plugin's own `styles.css` — that file isn't meant to be edited by users. Fine-grained color is likewise handled per-note via `color`, not CSS.
 
@@ -291,6 +298,28 @@ Beyond root + basic quality, the auto-generated title works out real chord theor
 
 Set it in Settings, in `fretboard-renderer.yaml` for the whole vault, or per diagram with `chordSymbolStyle: jazz`.
 
+### Degree Name root notation (key-relative Roman numerals)
+
+**Root notation** (`absolute` by default, or `degree`) controls how the auto-generated title spells its root — and slash bass, if any — for chord functional analysis (e.g. "the vii° of C major") or modal scale analysis ("the 7th mode of C major, i.e. B Locrian"). This is a different mechanism from the Roman-numeral slash bass that relative/movable-mode diagrams already show (`□m7/bVII`, relative to that diagram's *own* root) — Degree Name notation is relative to a `key` you set explicitly, and works in absolute mode too.
+
+- **`key`** (Local-only YAML field, e.g. `key: "C"`, `key: "F#"`): the tonic this diagram is analyzed against. Setting it draws a small "Key: C" label in the top-left corner, regardless of `rootNotation`.
+- **`rootNotation: degree`** only actually spells the root as a Roman numeral (`I, bII, II, bIII, III, IV, bV, V, bVI, VI, bVII, VII`, same table as the relative-mode slash bass) when **all** of these hold: `rootNotation` is `degree`, the diagram has a `key` set, and the diagram is in **absolute mode**. A relative/movable-mode diagram's real pitch (and so its scale degree) isn't determined, so it always falls back to `□` regardless of `key`/`rootNotation`. Missing any of the other conditions falls back to the real letter name.
+- A slash chord's bass is spelled the same way — relative to `key`, not the chord's own root — so the whole title stays consistently key-relative, e.g. `VIIm7(b5)/I` (bass on the key's own tonic).
+- Applies to `namingMode: scale` titles too: `key: C` + a B Locrian shape reads `VII Locrian` instead of `B Locrian`.
+
+```fretboard
+key: "C"
+rootNotation: degree
+startFret: 0
+notes:
+  - {s: 2, f: 0, label: root}
+  - {s: 4, f: 0}
+  - {s: 1, f: 1}
+  - {s: 5, f: 0}
+```
+
+This renders as `VIIm7(b5)` with a `Key: C` label — the same shape without `key`/`rootNotation` set renders as `Bm7(b5)`.
+
 ### Virtual notes
 
 Altered dominant chords like `G7(#9, b13)` are commonly played *without* the root at all — it's hard to reach, and the tension notes carry the color. But the root still has to be specified somewhere for interval math to work. Mark a note `virtual: true` and it stops being an actually-fretted, physically-sounding note — no shape/dot is drawn for it, just its computed label in parentheses at its fretboard position (e.g. `(R)` for a virtual root, `(5)` for a virtual 5th) — while still fully counting toward interval/chord-name calculation, exactly like a real note:
@@ -312,6 +341,69 @@ A virtual note:
 - Is excluded from the "lowest sounding note" bass/slash-chord calculation.
 - Still occupies its (`s`, `f`) position for grid sizing (`frets` auto-expansion, `visible`, etc.) like any other note.
 - Is available in object form only (`{s: ..., f: ..., virtual: true}`) — not in the shorthand array.
+
+### Polygon boxes: points, fill, and color
+
+`boxes` supports two mutually-exclusive forms: the original rectangle (`frets`/`strings`), or a polygon `points` list of 3+ `[string, fret]` pairs — triangle up to an arbitrary shape:
+
+```fretboard
+visible: 1-6
+boxes:
+  - points: [[1, 1], [3, 1], [3, 3], [6, 3], [6, 6], [1, 6]]
+    style: dashed
+notes:
+  - {s: 6, f: 1, label: root}
+  - [3, 3]
+  - [1, 6]
+```
+
+`points` uses the exact same coordinate convention as `paths`' `points` — real numbers allowed, not just integers, so e.g. `4.5` lands exactly on the boundary between fret 4 and 5. That means it's a strict superset of the rectangle form: `{frets: "1-4", strings: "2-5"}` can be reproduced exactly as `{points: [[1.5, 0.5], [5.5, 0.5], [5.5, 4.5], [1.5, 4.5]]}`.
+
+Both forms accept:
+- **`color`**: overrides the outline color, and the fill color too when `fill` is set.
+- **`fill`**: `true`/`false` (default `false`, unchanged). Fills the box at a fixed, low opacity — a translucent highlight, not an opaque block over the notes/grid underneath.
+
+Every box — rectangle or polygon — now draws with gently rounded corners (including concave ones, e.g. an L-shape) instead of sharp right angles; this isn't configurable.
+
+### Dot-to-dot paths: style and color
+
+Each entry in `paths` is either the plain shorthand array of `[string, fret]` pairs (solid line, default color — unchanged from before), or an object with `points` plus a per-path `style`/`color`:
+
+- **`style`**: `solid` (default) / `dashed` / `thick` — a `thick` path renders at the same stroke weight *and* opacity as a barre marker, for tracing a diagonal barre or emphasizing a group of dots as a set.
+- **`color`**: a CSS color overriding this path's stroke only (same convention as a note's own `color`), independent of its style.
+
+```fretboard
+visible: 3-6
+notes:
+  - {s: 6, f: 1, label: root}
+  - [5, 3]
+  - [4, 3]
+  - [3, 1]
+paths:
+  - {points: [[6, 1], [3, 1]], style: thick}
+  - {points: [[5, 3], [4, 3]], style: dashed, color: red}
+```
+
+### Per-string annotations (`stringNotes`)
+
+An annotation tied to a whole *string*, not any particular fret — drawn just outside the grid's trailing edge for that string's row: right of the grid in horizontal orientation, below it in vertical (the side opposite the open/muted-string header lane):
+
+```fretboard
+startFret: 10
+visible: 3-6
+notes:
+  - {s: 6, f: 10, finger: 1}
+  - {s: 5, f: 12, finger: 4}
+  - {s: 4, f: 11, finger: 2}
+  - {s: 3, f: 12, finger: 3}
+stringNotes:
+  - {s: 5, label: "4"}
+  - {s: 3, label: "3"}
+```
+
+Each entry takes `s` (required) plus the exact same shape/style vocabulary as a note — `label`, `shape`, `ghost`, `class`, `color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust` — reusing the same System/Global note-appearance defaults, so it reads as visually consistent with the rest of the diagram. Unlike a note, there's no `f` (not tied to a fret/pitch), so no auto-computed `label` (no "root" concept) and no `finger` field (the annotation's own `label` already serves that purpose, e.g. `label: "4"`). Object form only — no shorthand array, since this is meant for a handful of hand-placed annotations per diagram, same reasoning as `barre`/`boxes`.
+
+The immediate use case is hand-placed finger numbers a barre chord's main shape doesn't reach, but it's deliberately general — any short label or shape per string. It's also intended as groundwork for a future auto-fingering feature to target.
 
 ### Multiple diagrams side by side (`diagrams`)
 

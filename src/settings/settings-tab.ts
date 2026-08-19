@@ -131,6 +131,16 @@ export class FretboardSettingTab extends PluginSettingTab {
 						control: { type: "toggle", key: "showInversions", defaultValue: false },
 					},
 					{
+						name: "Root notation",
+						desc: 'How an auto-generated title spells its root (and slash bass, if any): a real letter name, or a Roman-numeral scale degree relative to a per-diagram `key` (e.g. "VIIm7(b5)" for key: C). Degree only takes effect when a block also sets `key` locally and is in absolute mode; otherwise it falls back to Absolute.',
+						control: {
+							type: "dropdown",
+							key: "rootNotation",
+							defaultValue: "absolute",
+							options: { absolute: "Absolute (letter name)", degree: "Degree (Roman numeral, needs key)" },
+						},
+					},
+					{
 						name: "Default shape",
 						desc: '"None" draws no outline — just the label on a borderless filled backdrop.',
 						control: {
@@ -391,6 +401,22 @@ export class FretboardSettingTab extends PluginSettingTab {
 					settings.showInversions = value;
 					await this.plugin.saveSettings();
 				})
+			);
+
+		new Setting(containerEl)
+			.setName("Root notation")
+			.setDesc(
+				'How an auto-generated title spells its root (and slash bass, if any): a real letter name, or a Roman-numeral scale degree relative to a per-diagram `key` (e.g. "VIIm7(b5)" for key: C). Degree only takes effect when a block also sets `key` locally and is in absolute mode; otherwise it falls back to Absolute.'
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("absolute", "Absolute (letter name)")
+					.addOption("degree", "Degree (Roman numeral, needs key)")
+					.setValue(settings.rootNotation)
+					.onChange(async (value) => {
+						settings.rootNotation = value as typeof settings.rootNotation;
+						await this.plugin.saveSettings();
+					})
 			);
 
 		new Setting(containerEl)
