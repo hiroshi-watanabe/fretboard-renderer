@@ -1,6 +1,6 @@
 {
 	"name": "fretboard-renderer",
-	"version": "0.2.5",
+	"version": "0.3.0",
 	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced code blocks.",
 	"main": "main.js",
 	"type": "module",
