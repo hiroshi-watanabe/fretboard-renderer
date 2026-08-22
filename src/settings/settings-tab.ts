@@ -59,7 +59,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 						control: {
 							type: "number",
 							key: "stringSpacing",
-							defaultValue: 30,
+							defaultValue: 24,
 							min: 1,
 							validate: positiveNumber,
 						},
@@ -69,8 +69,20 @@ export class FretboardSettingTab extends PluginSettingTab {
 						control: {
 							type: "number",
 							key: "fretSpacing",
-							defaultValue: 50,
+							defaultValue: 40,
 							min: 1,
+							validate: positiveNumber,
+						},
+					},
+					{
+						name: "Size",
+						desc: 'Overall multiplier applied on top of the pixel values above (and Note size/Label font size below) for every diagram, e.g. 0.7 to shrink everything vault-wide. A diagram\'s own Local "size" multiplies further on top of this rather than replacing it.',
+						control: {
+							type: "number",
+							key: "size",
+							defaultValue: 1,
+							min: 0.1,
+							step: "any",
 							validate: positiveNumber,
 						},
 					},
@@ -147,7 +159,35 @@ export class FretboardSettingTab extends PluginSettingTab {
 							type: "dropdown",
 							key: "defaultShape",
 							defaultValue: "circle",
-							options: { circle: "Circle", square: "Square", triangle: "Triangle", none: "None" },
+							options: {
+								circle: "Circle",
+								square: "Square",
+								triangle: "Triangle",
+								diamond: "Diamond",
+								octagon: "Octagon",
+								doublecircle: "Double circle (◎)",
+								x: "X",
+								none: "None",
+							},
+						},
+					},
+					{
+						name: "String note default shape",
+						desc: 'Default shape for stringNotes entries, separate from "Default shape" above — a per-string annotation (e.g. a string number) usually reads better as plain text than a filled-in dot, so this defaults to "None". stringNotes labels are always drawn in a muted color, regardless of this setting.',
+						control: {
+							type: "dropdown",
+							key: "stringNoteDefaultShape",
+							defaultValue: "none",
+							options: {
+								circle: "Circle",
+								square: "Square",
+								triangle: "Triangle",
+								diamond: "Diamond",
+								octagon: "Octagon",
+								doublecircle: "Double circle (◎)",
+								x: "X",
+								none: "None",
+							},
 						},
 					},
 					{
@@ -196,7 +236,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 					{
 						name: "Note size (px)",
 						desc: "Base radius of each note dot. Per-note `sizeAdjust` (-5..5) nudges from this.",
-						control: { type: "number", key: "noteSize", defaultValue: 10, min: 1, validate: positiveNumber },
+						control: { type: "number", key: "noteSize", defaultValue: 9, min: 1, validate: positiveNumber },
 					},
 					{
 						name: "Label font size (px)",
@@ -204,7 +244,7 @@ export class FretboardSettingTab extends PluginSettingTab {
 						control: {
 							type: "number",
 							key: "labelFontSize",
-							defaultValue: 10,
+							defaultValue: 11,
 							min: 1,
 							validate: positiveNumber,
 						},
@@ -310,6 +350,23 @@ export class FretboardSettingTab extends PluginSettingTab {
 						const n = parseInt(value, 10);
 						if (!Number.isNaN(n) && n > 0) {
 							settings.fretSpacing = n;
+							await this.plugin.saveSettings();
+						}
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("Size")
+			.setDesc(
+				'Overall multiplier applied on top of the pixel values above (and Note size/Label font size below) for every diagram, e.g. 0.7 to shrink everything vault-wide. A diagram\'s own Local "size" multiplies further on top of this rather than replacing it.'
+			)
+			.addText((text) =>
+				text
+					.setValue(String(settings.size))
+					.onChange(async (value) => {
+						const n = parseFloat(value);
+						if (!Number.isNaN(n) && n > 0) {
+							settings.size = n;
 							await this.plugin.saveSettings();
 						}
 					})
@@ -427,10 +484,36 @@ export class FretboardSettingTab extends PluginSettingTab {
 					.addOption("circle", "Circle")
 					.addOption("square", "Square")
 					.addOption("triangle", "Triangle")
+					.addOption("diamond", "Diamond")
+					.addOption("octagon", "Octagon")
+					.addOption("doublecircle", "Double circle (◎)")
+					.addOption("x", "X")
 					.addOption("none", "None")
 					.setValue(settings.defaultShape)
 					.onChange(async (value) => {
 						settings.defaultShape = value as typeof settings.defaultShape;
+						await this.plugin.saveSettings();
+					})
+			);
+
+		new Setting(containerEl)
+			.setName("String note default shape")
+			.setDesc(
+				'Default shape for stringNotes entries, separate from "Default shape" above — a per-string annotation (e.g. a string number) usually reads better as plain text than a filled-in dot, so this defaults to "None". stringNotes labels are always drawn in a muted color, regardless of this setting.'
+			)
+			.addDropdown((dropdown) =>
+				dropdown
+					.addOption("circle", "Circle")
+					.addOption("square", "Square")
+					.addOption("triangle", "Triangle")
+					.addOption("diamond", "Diamond")
+					.addOption("octagon", "Octagon")
+					.addOption("doublecircle", "Double circle (◎)")
+					.addOption("x", "X")
+					.addOption("none", "None")
+					.setValue(settings.stringNoteDefaultShape)
+					.onChange(async (value) => {
+						settings.stringNoteDefaultShape = value as typeof settings.stringNoteDefaultShape;
 						await this.plugin.saveSettings();
 					})
 			);

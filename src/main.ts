@@ -7,9 +7,10 @@ import {
 	parseFretboardBlock,
 	FretboardParseError,
 	resolveFretboardModel,
+	resolveFretboardSheet,
 } from "fretboard-renderer-core";
 import { FretboardSettingTab } from "./settings/settings-tab";
-import { renderFretboard, renderFretboardRow } from "./render/obsidian-render";
+import { renderFretboard, renderFretboardRow, renderFretboardSheet } from "./render/obsidian-render";
 import { FretboardEditorSuggest } from "./completion/obsidian-suggest";
 
 export default class FretboardRendererPlugin extends Plugin {
@@ -44,9 +45,11 @@ export default class FretboardRendererPlugin extends Plugin {
 				const effectiveSettings: FretboardPluginSettings = { ...this.settings, ...this.globalConfig };
 				if (parsed.kind === "single") {
 					renderFretboard(el, resolveFretboardModel(parsed.config, effectiveSettings));
-				} else {
+				} else if (parsed.kind === "multi") {
 					const models = parsed.diagrams.map((config) => resolveFretboardModel(config, effectiveSettings));
 					renderFretboardRow(el, models);
+				} else {
+					renderFretboardSheet(el, resolveFretboardSheet(parsed.sheet, effectiveSettings));
 				}
 			} catch (e) {
 				renderError(el, e);

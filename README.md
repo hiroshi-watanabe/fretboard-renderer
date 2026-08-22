@@ -108,8 +108,9 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Orientation | `horizontal` / `vertical` | `horizontal` |
 | Strings | Number of strings | `6` |
 | Fret count | Fret width to draw | `4` |
-| String spacing | Spacing between strings (px) | `30` |
-| Fret spacing | Spacing between frets (px) | `50` |
+| String spacing | Spacing between strings (px) | `24` |
+| Fret spacing | Spacing between frets (px) | `40` |
+| Size | Overall multiplier on top of the pixel values above (and Note size/Label font size below), for every diagram vault-wide, e.g. `0.7` to shrink everything. A diagram's own Local `size` multiplies further on top of this rather than replacing it | `1` |
 | Label mode | `interval` (degree) / `note` (note name) / `none` | `interval` |
 | Accidental | `sharp` (#) / `flat` (b) | `sharp` |
 | Naming mode | `chord` (name a chord) / `scale` (name a scale, see [below](#naming-mode-chord-vs-scale)) | `chord` |
@@ -117,14 +118,15 @@ Change these under Settings → Fretboard Renderer. They're the defaults for eve
 | Omit notation | On/off toggle — marks a chord missing an expected tone, e.g. `C(omit3)`, `G7(omit3)`, `(omit5)`. Off by default (guitarists very commonly omit the 5th — marking every such chord would be noisy). See [below](#chord-symbol-style--advanced-inference) | Off |
 | Show inversions | On/off toggle — shows the slash bass when it's just an inversion (the chord's own 3rd, 5th, or 7th as the lowest note, e.g. `C/E`). Off by default (real-world chord charts very often skip notating this). See [below](#chord-symbol-style--advanced-inference) | Off |
 | Root notation | `absolute` (real letter name) / `degree` (Roman-numeral scale degree relative to a per-diagram `key`), see [below](#degree-name-root-notation-key-relative-roman-numerals) | `absolute` |
-| Default shape | `circle` / `square` / `triangle` / `none` (no outline, label only — see [below](#notes-required)) | `circle` |
+| Default shape | `circle` / `square` / `triangle` / `diamond` / `octagon` / `doublecircle` (◎, a fixed ring + center dot) / `x` / `none` (no outline, label only — see [below](#notes-required)) | `circle` |
+| String note default shape | Same shape choices — separate default just for `stringNotes` entries (see [below](#per-string-annotations-stringnotes)); their label is always drawn in a muted color regardless of this setting | `none` |
 | Fill style | `filled` / `outlined` | `outlined` |
 | Nut style | `thick` / `double` | `thick` |
 | Fret numbering | `all` / `dotted` (only fretted columns) / `inlay` (standard inlay positions: 3,5,7,9,12,15,17,19,21,24,...) / `none` | `inlay` |
 | Default tuning | Comma separated, lowest string first | `E,A,D,G,B,E` |
 | Omitted string behavior | `open` (treat as f:0) / `muted` (treat as f:x) / `none` (draw nothing) | `open` |
-| Note size (px) | Base radius of each note dot; a note's `sizeAdjust` (-5..5) is added to this | `10` |
-| Label font size (px) | Base font size for note labels; a note's `labelSizeAdjust` (-5..5) is added to this | `10` |
+| Note size (px) | Base radius of each note dot; a note's `sizeAdjust` (-5..5) is added to this | `9` |
+| Label font size (px) | Base font size for note labels; a note's `labelSizeAdjust` (-5..5) is added to this (floored at 4px so it never shrinks to unreadable/negative) | `11` |
 
 `Label mode: note` only shows note names in **absolute mode** (`startFret` given, or an explicit open string `f: 0` present). In relative/movable mode (`startFret` omitted and no open string), the actual notes depend on where the shape is played, so `note` mode shows no automatic label either (interval labels are unaffected, since the same relationship holds wherever the shape is played).
 
@@ -183,7 +185,7 @@ notes:
 | `s` | Yes | String number (1..N, 1 is the highest-pitched string) |
 | `f` | Yes | Fret number. `0` = open, `1`+ = fretted, `x` = muted. **`0` and `x` are not grid columns** — they're always drawn in a special header lane outside the grid, and are never counted as fret-number labels |
 | `label` | – | `root` auto-computes the interval degree. Any other string (e.g. `"maj7"`, `"9"`) is shown verbatim, bypassing auto-calculation |
-| `shape` | – | `circle` / `square` / `triangle` / `none` — draws no outline, just the label (or finger number, or any value that would otherwise sit inside the shape). Still rendered as a borderless filled circle underneath — with or without a label — so it isn't literally invisible and text doesn't collide with the fret/string line behind it |
+| `shape` | – | `circle` / `square` / `triangle` / `diamond` / `octagon` / `doublecircle` / `x` / `none` — `none` draws no outline, just the label (or finger number, or any value that would otherwise sit inside the shape). Still rendered as a borderless filled circle underneath — with or without a label — so it isn't literally invisible and text doesn't collide with the fret/string line behind it. `x` is a crossed-lines mark usable on any fretted note (separate from the muted-string `f: "x"` header-lane cross). `doublecircle` (◎) is a fixed ring + center dot that ignores Fill Style, the same way `x` does |
 | `finger` | – | Finger number, printed small just outside the dot |
 | `ghost` | – | `true` draws a dashed/translucent outline |
 | `virtual` | – | `true` marks this as a reference pitch, not an actually-fretted/sounding note — see [Virtual notes](#virtual-notes) below |
@@ -192,8 +194,9 @@ notes:
 | `fillStyle` | – | `filled` / `outlined`. Overrides System/Global `Fill style` for just this note |
 | `sizeAdjust` | – | Integer -5..5. Nudges just this note's dot size (px) from `Note size` |
 | `labelSizeAdjust` | – | Integer -5..5. Nudges just this note's label font size (px) from `Label font size` |
+| `opacity` | – | Number 0..1. Fades this note's shape+label together as one unit, e.g. `0.4` for a faint passing/optional tone. Independent of `ghost` — if both are set, they compose (multiply) rather than one overriding the other |
 
-`color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust`, and `virtual` are only available in object form (`{s: ..., f: ...}`) — not in the `[s, f, label, shape, finger]` shorthand array.
+`color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust`, `opacity`, and `virtual` are only available in object form (`{s: ..., f: ...}`) — not in the `[s, f, label, shape, finger]` shorthand array.
 
 Notes highlighted as the root (same pitch class as the `label: root` note, including octaves) use the System accent color by default (Obsidian's `--interactive-accent` theme variable, typically purple/blue) — this is intentional default behavior. Use `color` above to override the color of any specific note, e.g. to make it red.
 
@@ -201,7 +204,7 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 
 | Key | Type | Description |
 | :--- | :--- | :--- |
-| `title` | String | Title printed above the diagram. Auto-generated if omitted (see below) |
+| `title` | String / `false` | Title printed above the diagram. Auto-generated if omitted (see below). `title: false` still computes it internally but never draws it — see [Chord progression sheet](#chord-progression-sheet-experimental) |
 | `startFret` | Number | Leftmost fret number of the grid. Omitting it switches to relative mode (see below). When given, every other fret number in the block (`notes`, `boxes`, `paths`, `barre`) is read as relative to position 1 and transposed: `absolute = f + max(startFret, 1) - 1`. `0` (open) and `x` (muted) are never transposed. This is a no-op for `startFret: 0` or `1`, so plain fixed-position chords written with real fret numbers are unaffected |
 | `frets` | Number | Fret width to draw (overrides System `Fret count` for this diagram only). If omitted, the grid auto-expands past `Fret count` when needed so no fretted note is clipped — an explicit value is never auto-expanded |
 | `orientation` | `horizontal` / `vertical` | Overrides orientation for this diagram only |
@@ -211,14 +214,15 @@ Notes highlighted as the root (same pitch class as the `label: root` note, inclu
 | `showInversions` | Boolean | Overrides Show inversions for this diagram's auto-generated title only — see [Chord symbol style & advanced inference](#chord-symbol-style--advanced-inference) |
 | `rootNotation` | `absolute` / `degree` | Overrides Root notation for this diagram's auto-generated title only — see [Degree Name root notation](#degree-name-root-notation-key-relative-roman-numerals) |
 | `key` | String | Tonic note name (e.g. `"C"`, `"F#"`) this diagram is analyzed against. Local-only. Enables `rootNotation: degree` and draws a "Key: X" label — see [Degree Name root notation](#degree-name-root-notation-key-relative-roman-numerals) |
-| `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together |
+| `omittedStringBehavior` | `open` / `muted` / `none` | Overrides System/Global `Omitted string behavior` for this diagram's auto-filled (not written in `notes`) strings only. To change one *specific* omitted string instead, write it out explicitly (e.g. `{s: 4, f: 0, shape: none}`) rather than using this |
+| `size` | Number | Overall scale for this diagram (e.g. `0.6` = 60% size). Useful for fitting several small diagrams together. Multiplies with the System/Global "Size" setting rather than replacing it |
 | `fretSpacingAdjust` | Integer -5..5 | Pixel nudge to fret spacing, applied before `size` |
 | `stringSpacingAdjust` | Integer -5..5 | Pixel nudge to string spacing, applied before `size` |
 | `visible` | String | Range of strings to draw, e.g. `"1-4"` |
 | `barre` | Array | `{fret, start, end}` — draws a barre marker |
 | `boxes` | Array | Outlines a region. Either the rectangle form `{frets: "5-8", strings: "1-6", style: "dashed"}`, or a polygon `{points: [[6,5],[3,5],[3,8],[6,8]], style: "dashed"}` (3+ `[string, fret]` pairs — triangle and up), mutually exclusive with `frets`/`strings`. Both forms accept `color` and `fill: true` (fixed low-opacity fill) — see [below](#polygon-boxes-points-fill-and-color) |
-| `paths` | Array | Connects dots with a line. Either the bare shorthand `[[6,5],[6,8],[5,5]]` (solid, default color), or `{points: [[6,5],[6,8]], style: "dashed", color: "red"}` for a styled/colored path — `style` is `solid` (default) / `dashed` / `thick` (barre-weight, for a diagonal barre or to emphasize a group of dots), see [below](#dot-to-dot-paths-style-and-color) |
-| `stringNotes` | Array | `{s, label?, shape?, ghost?, class?, color?, fillStyle?, sizeAdjust?, labelSizeAdjust?}` — a per-string annotation drawn outside the grid's trailing edge (right of the grid in horizontal orientation, below it in vertical), not tied to any fret. Same shape/style vocabulary and defaults as a note. See [below](#per-string-annotations-stringnotes) |
+| `paths` | Array | Connects dots with a line. Either the bare shorthand `[[6,5],[6,8],[5,5]]` (solid, default color), or `{points: [[6,5],[6,8]], style: "dashed", color: "red", arrow: "single", curve: true}` for a styled path — `style` is `solid` (default) / `dashed` / `thick` (barre-weight); `arrow` is `none` (default) / `single` / `double`; `curve` draws a smooth curve instead of straight segments — see [below](#dot-to-dot-paths-style-color-arrows-and-curves) |
+| `stringNotes` | Array | `{s, label?, shape?, ghost?, class?, color?, fillStyle?, sizeAdjust?, labelSizeAdjust?, side?}` — a per-string annotation drawn outside the grid, not tied to any fret. `side` is `trailing` (default — right in horizontal, below in vertical) or `leading` (left in horizontal, above in vertical). Same shape/style vocabulary and defaults as a note. See [below](#per-string-annotations-stringnotes) |
 
 `size` / `fretSpacingAdjust` / `stringSpacingAdjust` (whole diagram) and each note's `sizeAdjust` / `labelSizeAdjust` exist so you can fine-tune appearance from a note's YAML instead of editing the plugin's own `styles.css` — that file isn't meant to be edited by users. Fine-grained color is likewise handled per-note via `color`, not CSS.
 
@@ -365,12 +369,14 @@ Both forms accept:
 
 Every box — rectangle or polygon — now draws with gently rounded corners (including concave ones, e.g. an L-shape) instead of sharp right angles; this isn't configurable.
 
-### Dot-to-dot paths: style and color
+### Dot-to-dot paths: style, color, arrows, and curves
 
-Each entry in `paths` is either the plain shorthand array of `[string, fret]` pairs (solid line, default color — unchanged from before), or an object with `points` plus a per-path `style`/`color`:
+Each entry in `paths` is either the plain shorthand array of `[string, fret]` pairs (solid line, default color — unchanged from before), or an object with `points` plus a per-path `style`/`color`/`arrow`/`curve`:
 
 - **`style`**: `solid` (default) / `dashed` / `thick` — a `thick` path renders at the same stroke weight *and* opacity as a barre marker, for tracing a diagonal barre or emphasizing a group of dots as a set.
-- **`color`**: a CSS color overriding this path's stroke only (same convention as a note's own `color`), independent of its style.
+- **`color`**: a CSS color overriding this path's stroke (and its arrowhead, if any), independent of its style.
+- **`arrow`**: `none` (default) / `single` (an arrowhead at the last point in `points`) / `double` (arrowheads at both ends). There's no separate direction field — to flip a `single` arrow, write `points` in the opposite order.
+- **`curve`**: `true` draws a smooth curve through the points instead of straight segments — a gentle bow for exactly 2 points (a straight line has no interior points to derive curvature from), or a spline through every point for 3+ (it passes through each point exactly, not just near them).
 
 ```fretboard
 visible: 3-6
@@ -381,7 +387,7 @@ notes:
   - [3, 1]
 paths:
   - {points: [[6, 1], [3, 1]], style: thick}
-  - {points: [[5, 3], [4, 3]], style: dashed, color: red}
+  - {points: [[5, 3], [4, 3]], style: dashed, color: red, arrow: single, curve: true}
 ```
 
 ### Per-string annotations (`stringNotes`)
@@ -402,6 +408,23 @@ stringNotes:
 ```
 
 Each entry takes `s` (required) plus the exact same shape/style vocabulary as a note — `label`, `shape`, `ghost`, `class`, `color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust` — reusing the same System/Global note-appearance defaults, so it reads as visually consistent with the rest of the diagram. Unlike a note, there's no `f` (not tied to a fret/pitch), so no auto-computed `label` (no "root" concept) and no `finger` field (the annotation's own `label` already serves that purpose, e.g. `label: "4"`). Object form only — no shorthand array, since this is meant for a handful of hand-placed annotations per diagram, same reasoning as `barre`/`boxes`.
+
+`shape` defaults to the System/Global "String note default shape" (`none` by default), not the regular-note "Default shape". Unlike a real note, `shape: none` here skips the background circle entirely — regardless of Fill Style — for a genuinely bare, text-only look (a real note's `shape: none` still always draws an invisible-outline background, since its position must stay discoverable; a `stringNotes` entry isn't a real fretted pitch, so it has no such requirement). Fill Style only comes into play once you override `shape` to `circle`/`square`/`triangle`. The label itself is always drawn in a muted color.
+
+Add `side: "leading"` to draw it on the *other* edge instead — left of the grid in horizontal orientation (past the open/muted-string lane), above it in vertical. Handy for labeling the actual string numbers when `visible` restricts a diagram to a subset of strings (e.g. `visible: "4-6"` alone gives no visual cue that the top row is string 4, not string 1):
+
+```fretboard
+startFret: 0
+visible: "4-6"
+notes:
+  - {s: 5, f: 3, label: root}
+  - {s: 4, f: 2}
+  - {s: 6, f: 7}
+stringNotes:
+  - {s: 6, label: "6", side: leading}
+  - {s: 5, label: "5", side: leading}
+  - {s: 4, label: "4", side: leading}
+```
 
 The immediate use case is hand-placed finger numbers a barre chord's main shape doesn't reach, but it's deliberately general — any short label or shape per string. It's also intended as groundwork for a future auto-fingering feature to target.
 
@@ -445,6 +468,37 @@ diagrams:
 - Each entry in `diagrams` accepts exactly the same keys as a single diagram (`title`, `startFret`, `notes`, `size`, `orientation`, ...).
 - Wrapping happens automatically based on the available width.
 - Errors are reported with the diagram's index, e.g. `diagrams[0].notes`.
+- The list form above is actually shorthand for `diagrams: {fretboards: [the same list]}`. Written out that way, you can add a sibling **`size`** to set a shared default for every entry, instead of repeating it on each one:
+  ```fretboard
+  diagrams:
+    size: 0.6
+    fretboards:
+      - {title: Cmaj7, startFret: 0, notes: [...]}
+      - {title: Dm7, startFret: 0, notes: [...]}
+  ```
+  An entry's own `size` still overrides this default rather than combining with it.
+
+### Chord progression sheet (experimental)
+
+**Experimental — syntax may still change.** `diagrams` also accepts an *object* (instead of the list above) to pair a chord progression header line with the fretboards realizing it — the kind of layout found in a lot of method books (a row of chord names, a matching row of diagrams underneath). This isn't staff notation (pair it with something like [abcjs](https://github.com/paulrosen/abcjs) if you need that) — just enough structure to keep a progression line and its diagrams lined up without hand-tweaking layout.
+
+```fretboard
+diagrams:
+  progression:
+    - [Cmaj7]
+    - [Dm7, G7]
+  fretboards:
+    - - {startFret: 0, title: false, notes: [{s: 5, f: 3, label: root}, {s: 4, f: 2}, {s: 2, f: 0}]}
+    - - {startFret: 0, title: false, notes: [{s: 5, f: 5, label: root}, {s: 4, f: 3}, {s: 3, f: 5}]}
+      - {startFret: 0, title: false, notes: [{s: 3, f: 0, label: root}, {s: 2, f: 0}, {s: 1, f: 1}]}
+```
+
+- `progression` is a list of measures; every measure is written as its own list of "slots", even a one-chord measure (e.g. `[Cmaj7]` above) — more than one slot in a measure means a chord change mid-bar (e.g. `[Dm7, G7]`). There's deliberately no bare-string shorthand for a one-slot measure: a flat `progression: [Cmaj7, Dm7]` would be ambiguous between "two one-chord measures" and "one measure changing Cmaj7 to Dm7", so it's rejected — write `[[Cmaj7], [Dm7]]` or `[[Cmaj7, Dm7]]` to say which you mean.
+- A slot is an explicit chord name, `_N` (auto-derive this slot's text from a `fretboards` diagram — `N` must equal that slot's own position counting the whole progression in order), or `%` (repeat the previous slot's resolved text verbatim).
+- `fretboards` is index-aligned 1:1 with `progression`'s measures; `fretboards[i]` must have exactly as many cells as `progression[i]` has slots. A cell is one diagram (shorthand) or a list of diagrams — the same chord shown as multiple voicings side by side.
+- `variations` (mutually exclusive with `fretboards`) stacks several full passes under one shared header — `[{fretboards: [...]}, {fretboards: [...]}, ...]` — for something like a chord-melody exercise showing the same progression in several positions.
+- A sheet's shared header never silently hides a diagram's own title — set `title: false` per diagram if you don't want it repeated. `title: "$N"` designates that specific diagram as the source for progression slot N's `_N` (overriding the default, which is the first pass's diagram in that slot) and also hides that diagram's own title.
+- `size` (sibling of `progression`/`fretboards`/`variations`) sets a default `size` for every cell in the sheet, so it doesn't have to be repeated on each one — a cell's own explicit `size` still overrides it (they don't multiply together).
 
 ### Error handling
 

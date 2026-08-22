@@ -1,6 +1,6 @@
 {
 	"name": "fretboard-renderer",
-	"version": "0.3.0",
+	"version": "0.4.0",
 	"description": "Render guitar fretboard diagrams from lightweight YAML in fenced code blocks.",
 	"main": "main.js",
 	"type": "module",
@@ -18,7 +18,7 @@
 	"author": "Hiroshi Watanabe",
 	"license": "MIT",
 	"dependencies": {
-		"fretboard-renderer-core": "^0.3.0"
+		"fretboard-renderer-core": "^0.4.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.30.1",

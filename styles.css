@@ -74,6 +74,10 @@
 	opacity: 0.55;
 }
 
+.fretboard-path-arrowhead {
+	fill: var(--text-muted);
+}
+
 .fretboard-shape {
 	stroke: var(--text-normal);
 	stroke-width: 1.5;
@@ -122,6 +126,14 @@
 	font-weight: 500;
 }
 
+/* Scoped to .is-on-outlined specifically (not just .fretboard-label), so this never
+   outranks .is-on-filled's own contrast color when a stringNotes entry uses an explicit
+   non-"none" shape with fillStyle: filled — a muted color would be illegible there. */
+.fretboard-label.is-on-outlined.fretboard-string-note-label {
+	fill: var(--text-muted);
+	font-weight: 500;
+}
+
 .fretboard-finger {
 	font-size: 8px;
 	fill: var(--text-muted);
@@ -131,6 +143,33 @@
 	stroke: var(--text-muted);
 	stroke-width: 1.75;
 	stroke-linecap: round;
+}
+
+.fretboard-progression-chord {
+	font-size: 13px;
+	font-weight: 600;
+	fill: var(--text-normal);
+}
+
+.fretboard-progression-line,
+.fretboard-progression-measure-tick {
+	stroke: var(--text-normal);
+	stroke-width: 1.5;
+}
+
+.fretboard-sheet-line {
+	margin-bottom: 0.5em;
+}
+
+.fretboard-sheet-row {
+	display: flex;
+	align-items: flex-start;
+}
+
+.fretboard-sheet-cell {
+	display: flex;
+	justify-content: flex-start;
+	flex-shrink: 0;
 }
 
 .fretboard-error {

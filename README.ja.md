@@ -108,8 +108,9 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Orientation | `horizontal` / `vertical` | `horizontal` |
 | Strings | 弦の本数 | `6` |
 | Fret count | 描画するフレット幅 | `4` |
-| String spacing | 弦間隔（px） | `30` |
-| Fret spacing | フレット間隔（px） | `50` |
+| String spacing | 弦間隔（px） | `24` |
+| Fret spacing | フレット間隔（px） | `40` |
+| Size | 上記のpx値（および後述のNote size/Label font size）全体に掛かる倍率。Vault全体を一括で縮小・拡大したいときに使う（例: `0.7`）。各図のLocal `size`はこれを上書きせず、さらに掛け算で乗算される | `1` |
 | Label mode | `interval`（度数） / `note`（音名） / `none` | `interval` |
 | Accidental | `sharp`（#） / `flat`（b） | `sharp` |
 | Naming mode | `chord`（コード名を自動生成） / `scale`（最もマッチするスケール名を自動生成、[下記参照](#naming-modeコード名スケール名の自動生成切り替え)） | `chord` |
@@ -117,14 +118,15 @@ Obsidianの設定 → Fretboard Renderer から変更できます。Vault内の�
 | Omit notation | オン/オフ。理論上期待される構成音の省略を明示する（例: `C(omit3)`, `G7(omit3)`, `(omit5)`）。デフォルトはオフ（ギターでは5度の省略が非常に多く、常に表示すると煩雑になるため）。[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | オフ |
 | Show inversions | オン/オフ。単なる転回形（コード自体の3度・5度・7度が最低音に来ているだけ、例: `C/E`）の場合にスラッシュ表記を表示するか。デフォルトはオフ（実際のコード譜では転回形をあえて明示しないパターンの方が多いため）。[下記参照](#chord-symbol-styleコード表記スタイルと高度なコード名推定) | オフ |
 | Root notation | `absolute`（実音名） / `degree`（図の`key`を基準としたローマ数字の度数）、[下記参照](#degree-name表記keyを基準としたローマ数字) | `absolute` |
-| Default shape | `circle` / `square` / `triangle` / `none`（枠なし、ラベルのみ。[下記参照](#notes必須)） | `circle` |
+| Default shape | `circle` / `square` / `triangle` / `diamond`（◇） / `octagon`（八角形） / `doublecircle`（◎、外輪＋中心ドットの固定表示） / `x`（×字） / `none`（枠なし、ラベルのみ。[下記参照](#notes必須)） | `circle` |
+| String note default shape | 同じ形状の選択肢 — `stringNotes`専用の独立したデフォルト（[下記参照](#弦ごとの注記stringnotes)）。ラベル文字はこの設定に関わらず常に控えめな色で描画される | `none` |
 | Fill style | `filled`（黒塗り） / `outlined`（白抜き） | `outlined` |
 | Nut style | `thick`（太線） / `double`（二重線） | `thick` |
 | Fret numbering | `all` / `dotted`（音がある列のみ） / `inlay`（指板インレイ位置のみ: 3,5,7,9,12,15,17,19,21,24,...） / `none` | `inlay` |
 | Default tuning | 低音弦から高音弦の順、カンマ区切り | `E,A,D,G,B,E` |
 | Omitted string behavior | `open`（f:0扱い） / `muted`（f:x扱い） / `none`（描画しない） | `open` |
-| Note size (px) | 音のドット（形）の基準半径。個々のノートの`sizeAdjust`（-5〜5）がここに加算される | `10` |
-| Label font size (px) | 音のラベル文字の基準フォントサイズ。個々のノートの`labelSizeAdjust`（-5〜5）がここに加算される | `10` |
+| Note size (px) | 音のドット（形）の基準半径。個々のノートの`sizeAdjust`（-5〜5）がここに加算される | `9` |
+| Label font size (px) | 音のラベル文字の基準フォントサイズ。個々のノートの`labelSizeAdjust`（-5〜5）がここに加算される（4pxの下限あり、それ以上縮小しない） | `11` |
 
 `Label mode: note`は**絶対モード**（`startFret`を指定した場合、または明示的な開放弦`f: 0`を含む場合）でのみ音名を自動表示します。相対/移動モード（`startFret`省略かつ開放弦なし）では、実際の音はポジションに依存して確定しないため、`note`モードでも自動ラベルは表示されません（度数はどこで弾いても同じ関係になるため、`interval`モードはこの制約を受けません）。
 
@@ -183,7 +185,7 @@ notes:
 | `s` | ✅ | 弦番号（1〜N、1が最も高音の弦） |
 | `f` | ✅ | フレット番号。`0`=開放弦、`1`以上=押弦、`x`=ミュート。**`0`と`x`はグリッドの列ではなく、常にグリッド外のヘッダ領域に描画される特殊記号**（フレット番号ラベルとしてカウントされない） |
 | `label` | – | `root` を指定すると度数を自動計算。任意の文字列（`"maj7"`, `"9"` など）を書くと自動計算を無視してそのまま表示 |
-| `shape` | – | `circle` / `square` / `triangle` / `none` — 枠線を描画せず、ラベル（または運指番号、その他形の中に表示される値）だけを見せる。ラベルの有無に関わらず、背景として常に枠なしの塗りつぶし円を描画するため、完全に非表示にはならず、背後のフレット線・弦線と文字が交差して読みにくくなることもない |
+| `shape` | – | `circle` / `square` / `triangle` / `diamond` / `octagon` / `doublecircle` / `x` / `none` — `none`は枠線を描画せず、ラベル（または運指番号、その他形の中に表示される値）だけを見せる。ラベルの有無に関わらず、背景として常に枠なしの塗りつぶし円を描画するため、完全に非表示にはならず、背後のフレット線・弦線と文字が交差して読みにくくなることもない。`x`は×字の形状で、実際に押弦された任意の位置に使える（ミュート弦`f: "x"`のヘッダーレーン専用の×マークとは別物）。`doublecircle`（◎）は外輪＋中心ドットの固定表示で、`x`と同様Fill Styleの影響を受けない |
 | `finger` | – | 運指番号。ドットの外側に小さく表示 |
 | `ghost` | – | `true`で点線・半透明表示 |
 | `virtual` | – | `true`にすると、この音を実際に押弦・発音される音ではなく参照ピッチとして扱う。詳細は[仮想ノート](#仮想ノート)参照 |
@@ -192,8 +194,9 @@ notes:
 | `fillStyle` | – | `filled` / `outlined`。この音1つだけSystem/Globalの`Fill style`を上書き |
 | `sizeAdjust` | – | 整数 -5〜5。この音1つだけの形の大きさを`Note size`からpx単位で微調整 |
 | `labelSizeAdjust` | – | 整数 -5〜5。この音1つだけのラベル文字サイズを`Label font size`からpx単位で微調整 |
+| `opacity` | – | 数値0〜1。この音の形＋ラベルをまとめて薄く表示する（例: `0.4`で経過音・任意音などを弱い情報として示す）。`ghost`とは独立した仕組みで、両方指定した場合は上書きし合わず重ね合わさる（掛け算） |
 
-`color` / `fillStyle` / `sizeAdjust` / `labelSizeAdjust` / `virtual` はオブジェクト形式（`{s: ..., f: ...}`）でのみ指定できます。配列の省略記法（`[s, f, label, shape, finger]`）には含まれません。
+`color` / `fillStyle` / `sizeAdjust` / `labelSizeAdjust` / `opacity` / `virtual` はオブジェクト形式（`{s: ..., f: ...}`）でのみ指定できます。配列の省略記法（`[s, f, label, shape, finger]`）には含まれません。
 
 Rootとして強調される音（`label: root`と同じ音、オクターブ違い含む）は、デフォルトではSystemのアクセントカラー（Obsidianテーマの`--interactive-accent`、既定では紫系）で強調表示されます。これは意図した既定動作です。特定の音を赤にしたい等、個別に色を変えたい場合は上記の`color`で上書きしてください。
 
@@ -201,7 +204,7 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 
 | キー | 型 | 説明 |
 | :--- | :--- | :--- |
-| `title` | String | 上部に表示するタイトル。省略時は自動生成（下記参照） |
+| `title` | String / `false` | 上部に表示するタイトル。省略時は自動生成（下記参照）。`title: false`は内部計算は行うが表示だけ抑制する — [コード進行シート](#コード進行シート実験的機能)参照 |
 | `startFret` | Number | 描画領域の左端フレット番号。省略すると相対モードになる（下記参照）。指定した場合、ブロック内の他のフレット番号（`notes`, `boxes`, `paths`, `barre`）はすべて「ポジション1からの相対値」として解釈され、`absolute = f + max(startFret, 1) - 1`で実際のフレットに変換される。`0`（開放）と`x`（ミュート）は常に変換対象外。`startFret`が`0`または`1`のときは変換が発生しない（オフセット0）ため、実際のフレット番号をそのまま書く通常の絶対指定は影響を受けない |
 | `frets` | Number | 描画するフレット幅（Systemの`Fret count`をこの図だけ上書き）。省略時は、押弦音がグリッドからはみ出さないよう`Fret count`より自動的に広がる。明示指定した場合は自動拡張されない |
 | `orientation` | `horizontal` / `vertical` | この図だけ向きを上書き |
@@ -211,14 +214,15 @@ Rootとして強調される音（`label: root`と同じ音、オクターブ違
 | `showInversions` | Boolean | この図の自動生成タイトルだけShow inversionsを上書き。[Chord symbol style](#chord-symbol-styleコード表記スタイルと高度なコード名推定)参照 |
 | `rootNotation` | `absolute` / `degree` | この図の自動生成タイトルだけRoot notationを上書き。[Degree Name表記](#degree-name表記keyを基準としたローマ数字)参照 |
 | `key` | String | この図が分析の基準とするトニック音名（例: `"C"`, `"F#"`）。Local限定。`rootNotation: degree`を機能させ、「Key: X」ラベルを表示する。[Degree Name表記](#degree-name表記keyを基準としたローマ数字)参照 |
-| `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う |
+| `omittedStringBehavior` | `open` / `muted` / `none` | この図の自動補完される弦（`notes`に書かれていない弦）だけ、System/Globalの`Omitted string behavior`を上書きする。特定の1本の弦だけ変えたい場合は、この設定ではなくその弦を明示的に書くこと（例: `{s: 4, f: 0, shape: none}`） |
+| `size` | Number | この図全体の表示倍率（例: `0.6` で60%サイズ）。複数の図を小さく並べたい時に使う。System/Globalの「Size」設定を上書きするのではなく、それに掛け算で乗算される |
 | `fretSpacingAdjust` | 整数 -5〜5 | フレット間隔（px）への微調整。`size`より先に加算される |
 | `stringSpacingAdjust` | 整数 -5〜5 | 弦間隔（px）への微調整。`size`より先に加算される |
 | `visible` | String | 描画する弦の範囲。例: `"1-4"` |
 | `barre` | Array | `{fret, start, end}` でセーハ（バレー）を描画 |
 | `boxes` | Array | 領域を枠で囲む。矩形形式`{frets: "5-8", strings: "1-6", style: "dashed"}`か、多角形形式`{points: [[6,5],[3,5],[3,8],[6,8]], style: "dashed"}`（3点以上の`[string, fret]`座標、三角形以上）のどちらか（`frets`/`strings`とは排他）。両形式とも`color`と`fill: true`（固定の低い不透明度での塗りつぶし）に対応。[下記参照](#多角形box-points-fill-color) |
-| `paths` | Array | ドット同士を線で結ぶ。省略記法`[[6,5],[6,8],[5,5]]`（実線・デフォルト色）か、`{points: [[6,5],[6,8]], style: "dashed", color: "red"}`のように個別にstyle/colorを指定できるオブジェクト形式。`style`は`solid`（デフォルト） / `dashed` / `thick`（バレー記号と同じ太さ・不透明度。斜めのバレーや、ドットのまとまりの強調に使う）。[下記参照](#ドット同士を結ぶ線-styleとcolor) |
-| `stringNotes` | Array | `{s, label?, shape?, ghost?, class?, color?, fillStyle?, sizeAdjust?, labelSizeAdjust?}` — 特定のフレットではなく弦そのものに紐づく注記を、グリッドの外側の末端（Horizontal Orientationでは右側、Verticalでは下側）に描画する。`notes`と同じ形・スタイルの語彙とデフォルト値を使う。[下記参照](#弦ごとの注記stringnotes) |
+| `paths` | Array | ドット同士を線で結ぶ。省略記法`[[6,5],[6,8],[5,5]]`（実線・デフォルト色）か、`{points: [[6,5],[6,8]], style: "dashed", color: "red", arrow: "single", curve: true}`のように個別にstyle等を指定できるオブジェクト形式。`style`は`solid`（デフォルト） / `dashed` / `thick`（バレー記号と同じ太さ・不透明度）。`arrow`は`none`（デフォルト） / `single` / `double`。`curve`は直線ではなく滑らかな曲線で結ぶ。[下記参照](#ドット同士を結ぶ線-style色矢印曲線) |
+| `stringNotes` | Array | `{s, label?, shape?, ghost?, class?, color?, fillStyle?, sizeAdjust?, labelSizeAdjust?, side?}` — 特定のフレットではなく弦そのものに紐づく注記を、グリッドの外側に描画する。`side`は`trailing`（デフォルト——Horizontalで右側、Verticalで下側）または`leading`（Horizontalで左側、Verticalで上側）。`notes`と同じ形・スタイルの語彙とデフォルト値を使う。[下記参照](#弦ごとの注記stringnotes) |
 
 `size` / `fretSpacingAdjust` / `stringSpacingAdjust`（図全体）と、各`notes`エントリの`sizeAdjust` / `labelSizeAdjust`（音1つだけ）は、プラグインの `styles.css` を直接編集する代わりに、ノート側から見た目を微調整するための機能です。ユーザーが本体のCSSファイルを触ることは想定していません。細かい色調整も同様に、CSSではなく各`notes`エントリの`color`で行います。
 
@@ -363,12 +367,14 @@ notes:
 
 矩形・多角形を問わず、すべてのboxは鋭角ではなく、わずかに丸みを帯びたコーナー（凹んだ角、例えばL字型の内側の角も含む）で描画されるようになりました。これは設定で変更できません。
 
-### ドット同士を結ぶ線: styleとcolor
+### ドット同士を結ぶ線: style・色・矢印・曲線
 
-`paths`の各要素は、従来通りの`[string, fret]`座標配列の省略記法（実線・デフォルト色）か、`points`に座標配列を渡しつつ`style`/`color`を個別指定できるオブジェクト形式のどちらかで書けます:
+`paths`の各要素は、従来通りの`[string, fret]`座標配列の省略記法（実線・デフォルト色）か、`points`に座標配列を渡しつつ`style`/`color`/`arrow`/`curve`を個別指定できるオブジェクト形式のどちらかで書けます:
 
 - **`style`**: `solid`（デフォルト） / `dashed`（点線） / `thick`（バレー記号と同じ太さ・不透明度の実線。斜めのバレーを表現したい場合や、複数のドットのまとまりを1組として強調したい場合に使う）。
-- **`color`**: この線1本だけのストロークの色をCSS色文字列で上書きする（ノートの`color`と同じ規約）。`style`とは独立に指定できる。
+- **`color`**: この線1本だけのストロークの色（および矢印がある場合は矢じりの色）をCSS色文字列で上書きする（ノートの`color`と同じ規約）。`style`とは独立に指定できる。
+- **`arrow`**: `none`（デフォルト） / `single`（`points`の最後の点にだけ矢じり） / `double`（両端に矢じり）。向きを指定する独立したフィールドは無く、`single`は常に「`points`に書いた順序の後ろの点」を指す——逆向きにしたい場合は`points`を逆順に書く。
+- **`curve`**: `true`にすると直線ではなく滑らかな曲線で結ぶ。点が2つだけなら一定量の弓なり、3点以上なら全ての点を通るスプライン曲線になる（近似ではなく指定した点を必ず通る）。
 
 ```fretboard
 visible: 3-6
@@ -379,7 +385,7 @@ notes:
   - [3, 1]
 paths:
   - {points: [[6, 1], [3, 1]], style: thick}
-  - {points: [[5, 3], [4, 3]], style: dashed, color: red}
+  - {points: [[5, 3], [4, 3]], style: dashed, color: red, arrow: single, curve: true}
 ```
 
 ### 弦ごとの注記（`stringNotes`）
@@ -400,6 +406,23 @@ stringNotes:
 ```
 
 各要素は`s`（必須）に加え、`notes`と全く同じ形・スタイルの語彙——`label`, `shape`, `ghost`, `class`, `color`, `fillStyle`, `sizeAdjust`, `labelSizeAdjust`——を持ち、同じSystem/Globalのデフォルト値を使うため、図の他の部分と見た目が一貫します。`notes`と違い`f`（フレット/ピッチに紐づかない）が無いため、自動計算されるラベル（`root`概念）も無く、`finger`フィールドも無い（この機能自体の`label`がすでにその役割を果たすため、例: `label: "4"`）。オブジェクト形式のみ——`barre`/`boxes`と同じ理由で、1つの図に数個程度しか置かない想定のため配列の省略記法は用意していません。
+
+`shape`のデフォルトは通常の`notes`用「Default shape」ではなく、`stringNoteDefaultShape`（既定`none`）です。通常のノートと違い、`shape: none`の場合は`Fill Style`に関わらず背景の円を一切描画しません（純粋なテキストのみ）——実在のノートの`shape: none`は位置を常に視認できる必要があるため見えない縁取りの背景を常に描画しますが、`stringNotes`は実在のピッチではないためその制約がありません。`Fill Style`が意味を持つのは`shape`を`circle`/`square`/`triangle`に明示的に上書きした場合のみです。ラベル文字は常に控えめな色で描画されます。
+
+`side: "leading"`を足すと反対側——Horizontal Orientationではグリッドの左側（開放弦/ミュート弦のヘッダーレーンよりさらに外側）、Verticalでは上側——に描画できます。`visible`で表示弦を絞り込んだ図（例: `visible: "4-6"`）で、実際の弦番号をラベル表示したい場合などに便利です（`visible: "4-6"`だけでは、一番上の行が弦4であって弦1ではないことが見た目では分かりません）:
+
+```fretboard
+startFret: 0
+visible: "4-6"
+notes:
+  - {s: 5, f: 3, label: root}
+  - {s: 4, f: 2}
+  - {s: 6, f: 7}
+stringNotes:
+  - {s: 6, label: "6", side: leading}
+  - {s: 5, label: "5", side: leading}
+  - {s: 4, label: "4", side: leading}
+```
 
 さしあたっての用途はバレーコードの主要な形ではカバーしきれない指番号の手動配置ですが、意図的に汎用的な設計にしてあります——弦ごとの短いラベルや形であれば何でも構いません。将来的な自動指番号機能の出力先となることも見込んだ布石でもあります。
 
@@ -443,6 +466,37 @@ diagrams:
 - `diagrams`の各要素は、単一の図とまったく同じキー（`title`, `startFret`, `notes`, `size`, `orientation`など）を使えます。
 - 折り返しはブラウザの幅に応じて自動的に行われます（横に入りきらなければ次の行へ）。
 - エラーが起きた場合は`diagrams[0].notes`のように、どの図の何が問題かを示すエラーメッセージが表示されます。
+- 上記の配列形式は、実は`diagrams: {fretboards: [同じ配列]}`というオブジェクト形式の省略記法です。オブジェクト形式で書けば、`size`を同じ階層に追加して全エントリ共通のデフォルトにできます（1つ1つに書く手間を省けます）:
+  ```fretboard
+  diagrams:
+    size: 0.6
+    fretboards:
+      - {title: Cmaj7, startFret: 0, notes: [...]}
+      - {title: Dm7, startFret: 0, notes: [...]}
+  ```
+  各エントリ自身の`size`は、このデフォルトと合成されるのではなく上書きします。
+
+### コード進行シート（実験的機能）
+
+**実験的機能——文法は今後変わる可能性があります。** `diagrams`は上記の配列に加えて、**オブジェクト形式**でも書けます。コード進行のヘッダー行と、それに対応する指板図を構造的に結びつけて描画できます。教則本によくある「コード名の行＋その下に対応する指板図」というレイアウトです。五線譜そのものを目的とはしません（それが必要な場合は[abcjs](https://github.com/paulrosen/abcjs)等と組み合わせてください）——あくまで進行の行と指板図がレイアウト崩れなく対応するための最小限の仕組みです。
+
+```fretboard
+diagrams:
+  progression:
+    - [Cmaj7]
+    - [Dm7, G7]
+  fretboards:
+    - - {startFret: 0, title: false, notes: [{s: 5, f: 3, label: root}, {s: 4, f: 2}, {s: 2, f: 0}]}
+    - - {startFret: 0, title: false, notes: [{s: 5, f: 5, label: root}, {s: 4, f: 3}, {s: 3, f: 5}]}
+      - {startFret: 0, title: false, notes: [{s: 3, f: 0, label: root}, {s: 2, f: 0}, {s: 1, f: 1}]}
+```
+
+- `progression`は「小節」の配列。**1コードしか無い小節も含めて、各小節は必ずその小節専用の配列として書きます**（上記の`[Cmaj7]`のように）。1小節に複数スロットを並べると、小節内でのコードチェンジになります（上記の`[Dm7, G7]`を参照）。角括弧を省いたフラットな配列（例: `progression: [Cmaj7, Dm7]`）は、意図的にサポートしません——「Cmaj7とDm7、それぞれ1小節ずつの2小節」なのか「1小節の中でCmaj7からDm7へコードチェンジ」なのかが見た目だけでは判別できず紛らわしいためです。前者は`[[Cmaj7], [Dm7]]`、後者は`[[Cmaj7, Dm7]]`と書いてください。
+- スロットの値は、明示的なコード名文字列 / `_N`（このスロットの文字列を`fretboards`側のダイアグラムから自動導出する。`N`は進行全体を通したこのスロット自身の位置と一致していなければならない） / `%`（直前のスロットの解決済みテキストをそのまま複製）のいずれかです。
+- `fretboards`は`progression`の小節と添字が1:1対応する配列で、`fretboards[i]`の要素数は`progression[i]`のスロット数と厳密に一致している必要があります。各要素（セル）はダイアグラム1個（省略記法）、またはダイアグラムの配列（同じコードを複数の声部で並べて見せる場合）です。
+- `variations`（`fretboards`と排他）は、共通のヘッダーの下に複数のパス（行）をまとめて積みます——`[{fretboards: [...]}, {fretboards: [...]}, ...]`。同じ進行を異なるポジションで示すコード・メロディ練習などに使えます。
+- シートの共通ヘッダーは、個々のダイアグラム自身のtitleを勝手に非表示にはしません。重複表示したくない場合は各ダイアグラムに`title: false`を指定してください。`title: "$N"`は、そのダイアグラムをprogressionのスロットN（`_N`）の明示的な供給元として指名し（デフォルトの供給元＝1本目のパスの対応するダイアグラムを上書きする）、同時にそのダイアグラム自身のtitle表示も抑制します。
+- `size`（`progression`/`fretboards`/`variations`と同階層）は、このシート内の全セルに適用されるデフォルトの`size`を設定します——1つ1つのセルに同じ`size`を書く手間を省けます。セル自身が`size`を明示している場合はそちらが優先されます（掛け合わされることはありません）。
 
 ### エラー処理
 
